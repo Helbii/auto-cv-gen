@@ -326,7 +326,7 @@ function App() {
   const audit = result?.audit;
   const scoreBreakdown = result?.matching?.score_breakdown;
   const originalMarkdown = outputMode === "cv" ? result?.final_markdown
-    : outputMode === "email" ? result?.email_markdown
+    : outputMode === "email" ? null /* lettre désactivée temporairement */
     : result?.audit_markdown;
   // Texte édité par mode (null = utilise l'original du résultat)
   const markdown = editedMarkdown[outputMode] ?? originalMarkdown ?? "";
@@ -343,7 +343,7 @@ function App() {
   }
 
   function downloadMarkdown() {
-    const names = { cv: "cv_recruteur", email: "lettre_motivation", audit: "audit" };
+    const names = { cv: "cv_recruteur", audit: "audit" };
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -571,7 +571,7 @@ function App() {
                 <div className="output-section">
                   <div className="output-head">
                     <div className="tabs">
-                      {[["cv","CV recruteur"],["email","Lettre"],["audit","Audit"]].map(([id, lbl]) => (
+                      {[["cv","CV recruteur"],["audit","Audit"]].map(([id, lbl]) => (
                         <button key={id} className={`tab ${outputMode === id ? "active" : ""}`} onClick={() => setOutputMode(id)}>{lbl}</button>
                       ))}
                     </div>
