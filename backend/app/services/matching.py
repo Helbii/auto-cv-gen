@@ -449,7 +449,18 @@ def candidate_total_years(cv_master: Optional[Dict[str, Any]]) -> float:
         return 0.0
     intervals = []
     for exp in cv_master.get("experiences", []):
-        s, e = _exp_months(exp.get("startDate"), exp.get("endDate"), bool(exp.get("isCurrent")))
+        # Schéma database : startDate / endDate / isCurrent
+        start = exp.get("startDate")
+        end = exp.get("endDate")
+        is_current = bool(exp.get("isCurrent"))
+        # Schéma legacy/rich : periode → {debut, fin}
+        if start is None:
+            periode = exp.get("periode") if isinstance(exp.get("periode"), dict) else {}
+            start = periode.get("debut")
+            fin = periode.get("fin", "")
+            is_current = isinstance(fin, str) and "en cours" in fin.lower()
+            end = None if is_current else fin
+        s, e = _exp_months(start, end, is_current)
         if s is not None and e is not None and e >= s:
             intervals.append((s, e))
     if not intervals:

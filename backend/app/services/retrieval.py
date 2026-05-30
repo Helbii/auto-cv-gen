@@ -1,7 +1,10 @@
+import logging
 import math
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+logger = logging.getLogger(__name__)
 
 from .semantic_graph import expand_text_with_graph
 from .storage import get_connection, load_all_evidence
@@ -98,8 +101,8 @@ def retrieve_relevant_evidence(sqlite_path: Path, job_offer: str, top_k: int = 3
                 ).fetchall()
                 for idx, row in enumerate(rows):
                     scores[row["id"]] = scores.get(row["id"], 0) + max(1, top_k * 3 - idx)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Recherche FTS échouée (scoring TF-IDF seul) : %s", exc)
 
     # ── 2) Scoring TF-IDF (remplace le simple comptage de tokens) ────────────
     for ev in all_evidence:

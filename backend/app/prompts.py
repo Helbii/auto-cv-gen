@@ -84,7 +84,6 @@ GENERATED_CV_SCHEMA = {
             "type": "object",
             "required": [
                 "title",
-                "matching_score",
                 "professional_summary",
                 "skills_to_display",
                 "experience_bullets",
@@ -94,7 +93,6 @@ GENERATED_CV_SCHEMA = {
             ],
             "properties": {
                 "title": {"type": "string"},
-                "matching_score": {"type": "integer"},
                 "professional_summary": {"type": "string"},
                 "skills_to_display": {
                     "type": "array",

@@ -94,11 +94,11 @@ def delete_generation(db_path: Path, gen_id: int) -> Optional[str]:
     if not entry:
         return None
     folder = Path(entry["folder"])
+    if folder.exists():
+        shutil.rmtree(folder)
     with _conn(db_path) as conn:
         conn.execute("DELETE FROM generations WHERE id = ?", (gen_id,))
         conn.commit()
-    if folder.exists():
-        shutil.rmtree(folder, ignore_errors=True)
     return entry["folder"]
 
 

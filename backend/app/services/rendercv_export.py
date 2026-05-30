@@ -1,3 +1,4 @@
+import copy
 import re
 import shutil
 import subprocess
@@ -513,6 +514,7 @@ def build_rendercv_yaml_data(
     audit: Dict[str, Any],
     id_to_evidence: Dict[str, Dict[str, Any]],
     cv_master: Optional[Dict[str, Any]] = None,
+    options: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     static_sections = extract_static_cv_sections(id_to_evidence)
     identity = static_sections["identity"]
@@ -607,7 +609,7 @@ def build_rendercv_yaml_data(
             "social_networks": social_networks or None,
             "sections": sections,
         },
-        "design": build_design(),
+        "design": build_design(options),
         "locale": {
             "language": "french",
             "last_updated": "Dernière mise à jour",
@@ -662,6 +664,7 @@ def _ensure_custom_theme_available(output_dir: Path, theme: Optional[str]) -> No
 
 
 def render_rendercv_data(output_dir: Path, data: Dict[str, Any], base_name: str = "cv_targeted") -> Dict[str, str]:
+    data = copy.deepcopy(data)
     output_dir.mkdir(parents=True, exist_ok=True)
     theme = (data.get("design") or {}).get("theme")
     _ensure_custom_theme_available(output_dir, theme)
