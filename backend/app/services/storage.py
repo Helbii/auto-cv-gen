@@ -13,11 +13,9 @@ def get_connection(sqlite_path: Path) -> sqlite3.Connection:
 
 def init_db(sqlite_path: Path) -> None:
     with get_connection(sqlite_path) as conn:
-        conn.execute("DROP TABLE IF EXISTS evidence")
-        conn.execute("DROP TABLE IF EXISTS evidence_fts")
         conn.execute(
             """
-            CREATE TABLE evidence (
+            CREATE TABLE IF NOT EXISTS evidence (
                 id TEXT PRIMARY KEY,
                 category TEXT NOT NULL,
                 source TEXT NOT NULL,
@@ -29,7 +27,7 @@ def init_db(sqlite_path: Path) -> None:
         )
         conn.execute(
             """
-            CREATE VIRTUAL TABLE evidence_fts USING fts5(
+            CREATE VIRTUAL TABLE IF NOT EXISTS evidence_fts USING fts5(
                 id UNINDEXED,
                 category,
                 source,
@@ -45,6 +43,8 @@ def init_db(sqlite_path: Path) -> None:
 def index_evidence(sqlite_path: Path, evidence_bank: List[Dict[str, Any]]) -> None:
     init_db(sqlite_path)
     with get_connection(sqlite_path) as conn:
+        conn.execute("DELETE FROM evidence_fts")
+        conn.execute("DELETE FROM evidence")
         for ev in evidence_bank:
             conn.execute(
                 """
