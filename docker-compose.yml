@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: auto-cv-backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./storage:/app/storage
+      - ./customcv:/custom:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: auto-cv-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Optionnel : utiliser Ollama dans Docker au lieu d'Ollama installé sur Windows.
+  # Lance avec : docker compose --profile ollama up --build
+  # Puis dans .env : OLLAMA_BASE_URL=http://ollama:11434
+  ollama:
+    image: ollama/ollama:latest
+    container_name: auto-cv-ollama
+    profiles:
+      - ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_data:

@@ -1,0 +1,104 @@
+{
+  "profile": {
+    "firstName": "Alice",
+    "lastName": "Dupont",
+    "title": "Développeuse Python Backend — Data & IA",
+    "summary": "Développeuse Python avec 3 ans d'expérience en backend, pipelines de données et IA appliquée.",
+    "location": { "city": "Paris", "country": "France" },
+    "contact": {
+      "email": "alice.dupont@exemple.fr",
+      "phone": "+33 6 00 00 00 00",
+      "linkedin": "https://linkedin.com/in/alice-dupont-exemple",
+      "github": "https://github.com/alice-dupont-exemple"
+    }
+  },
+
+  "targetRoles": ["Développeuse Python Backend", "Ingénieure Data"],
+
+  "skills": {
+    "technical": {
+      "programmingLanguages": ["Python", "SQL", "Bash"],
+      "backend":              ["FastAPI", "Flask", "API REST"],
+      "dataEngineering":      ["Pandas", "NumPy", "ETL", "Airflow"],
+      "databases":            ["PostgreSQL", "MySQL", "MongoDB"],
+      "devOpsTools":          ["Docker", "Git", "Linux", "CI/CD"]
+    },
+    "softSkills":    ["Rigueur", "Autonomie", "Communication technique"],
+    "methodologies": ["Agile", "Scrum", "TDD"]
+  },
+
+  "experiences": [
+    {
+      "company":      "TechCorp SAS",
+      "position":     "Développeuse Backend Python",
+      "startDate":    "2022-09",
+      "endDate":      "2024-06",
+      "isCurrent":    false,
+      "contractType": "CDI",
+      "location":     { "city": "Paris", "country": "France" },
+      "summary": "Développement et maintenance d'APIs REST et pipelines de données.",
+      "missions": [
+        "Développé 4 pipelines Python batch pour la structuration de datasets industriels.",
+        "Conçu et déployé une API FastAPI exposant des traitements via REST.",
+        "Analysé et résolu des incidents de connectivité sur systèmes embarqués IoT.",
+        "Documenté les solutions techniques et procédures de résolution."
+      ],
+      "technologies": ["Python", "FastAPI", "PostgreSQL", "Docker", "Linux"],
+      "achievements": [
+        {
+          "description": "Réduction du temps de traitement des pipelines de 40 %.",
+          "impact":      "Économie de 2h/jour sur le pipeline principal."
+        }
+      ]
+    },
+    {
+      "company":      "DataLab Consulting",
+      "position":     "Stagiaire Data Engineer",
+      "startDate":    "2021-06",
+      "endDate":      "2021-12",
+      "isCurrent":    false,
+      "contractType": "Stage",
+      "location":     { "city": "Lyon", "country": "France" },
+      "summary": "Stage de 6 mois axé sur l'ingestion et la qualité des données.",
+      "missions": [
+        "Développé des scripts Python d'ingestion et de validation de données.",
+        "Contribué à la mise en place d'un pipeline ETL avec Airflow."
+      ],
+      "technologies": ["Python", "SQL", "Airflow", "Git"]
+    }
+  ],
+
+  "education": [
+    {
+      "school":    "ESIEE Paris",
+      "degree":    "Master Informatique",
+      "field":     "Intelligence Artificielle et Big Data",
+      "startDate": "2019-09",
+      "endDate":   "2022-06",
+      "isCurrent": false,
+      "relevantCourses": ["Machine Learning", "Systèmes distribués", "Bases de données avancées"]
+    }
+  ],
+
+  "languages": [
+    { "language": "Français", "level": "Natif"   },
+    { "language": "Anglais",  "level": "Courant" }
+  ],
+
+  "certifications": [
+    { "name": "TOEIC 870" }
+  ],
+
+  "projects": [
+    {
+      "name":         "AutoAnalyse",
+      "startDate":    "2023-03",
+      "endDate":      "2023-09",
+      "description":  "Outil open source d'analyse automatique de logs applicatifs.",
+      "problemSolved":"Réduction du temps de diagnostic d'incidents de 30 min à 2 min.",
+      "features":     ["Parsing multi-format", "Détection d'anomalies", "Dashboard HTML"],
+      "highlights":   ["50+ stars GitHub", "Utilisé en production par 3 équipes internes"],
+      "technologies": ["Python", "FastAPI", "React", "Docker"]
+    }
+  ]
+}

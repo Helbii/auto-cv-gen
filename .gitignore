@@ -1,0 +1,43 @@
+# ── Données personnelles ─────────────────────────────
+# Ne JAMAIS pousser votre CV, photo ou config locale
+.env
+data/cv_master.json
+data/photo.jpg
+data/photo.jpeg
+data/photo.png
+data/semantic_graph.json
+
+# ── Fichiers générés (contenu personnel) ────────────
+outputs/
+storage/
+
+# ── Python ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.Python
+.venv/
+venv/
+env/
+
+# ── Node / Frontend ───────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ── Outils locaux (Claude Code) ──────────────────────
+.claude/
+.agents/
+skills-lock.json
+
+# ── OS ───────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
