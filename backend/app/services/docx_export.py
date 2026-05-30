@@ -12,10 +12,10 @@ from docx.shared import Cm, Pt, RGBColor
 
 from .audit import resolve_safe_summary, resolve_safe_title
 from .markdown import (
-    _format_achievement,
-    _format_cv_date,
-    _format_location,
-    _is_database_cv,
+    format_achievement,
+    format_cv_date,
+    format_location,
+    is_database_cv,
     group_experience_bullets,
     stack_for_source,
     build_offer_terms,
@@ -111,7 +111,7 @@ def _add_header_database(doc: Document, cv_master: Dict[str, Any],
 
     # Contacts sur une ligne
     contact_parts = [
-        _format_location(profile.get("location")),
+        format_location(profile.get("location")),
         contact.get("email"),
         contact.get("phone"),
         contact.get("linkedin"),
@@ -176,8 +176,8 @@ def _add_experiences_database(doc: Document, cv_master: Dict[str, Any], matching
     _section_title(doc, "Expériences professionnelles")
     offer_terms = build_offer_terms(matching or {})
     for index, exp in enumerate(experiences[:3]):
-        date     = _format_cv_date(exp.get("startDate"), exp.get("endDate"), bool(exp.get("isCurrent")))
-        location = _format_location(exp.get("location"))
+        date     = format_cv_date(exp.get("startDate"), exp.get("endDate"), bool(exp.get("isCurrent")))
+        location = format_location(exp.get("location"))
         header_parts = [exp.get("position"), exp.get("company"), location, date]
         header_str   = " — ".join(p for p in header_parts if p)
 
@@ -194,7 +194,7 @@ def _add_experiences_database(doc: Document, cv_master: Dict[str, Any], matching
             _bullet(doc, mission)
 
         for achievement in exp.get("achievements", [])[:(1 if index <= 1 else 0)]:
-            text = _format_achievement(achievement)
+            text = format_achievement(achievement)
             if text:
                 _bullet(doc, text)
 
@@ -246,7 +246,7 @@ def _add_education_database(doc: Document, cv_master: Dict[str, Any]) -> None:
         return
     _section_title(doc, "Formation")
     for edu in education[:4]:
-        date  = _format_cv_date(edu.get("startDate"), edu.get("endDate"), bool(edu.get("isCurrent")))
+        date  = format_cv_date(edu.get("startDate"), edu.get("endDate"), bool(edu.get("isCurrent")))
         parts = [edu.get("school"), edu.get("degree"), date]
         _bullet(doc, " — ".join(p for p in parts if p))
 
@@ -286,7 +286,7 @@ def generate_cv_docx(
     style.paragraph_format.space_after  = Pt(3)
     style.paragraph_format.space_before = Pt(0)
 
-    if _is_database_cv(cv_master):
+    if is_database_cv(cv_master):
         _add_header_database(doc, cv_master, matching, generated, audit)
         _add_summary(doc, matching, generated, audit)
         _add_skills_database(doc, cv_master, audit)

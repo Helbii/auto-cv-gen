@@ -8,21 +8,18 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from ..core.config import settings
-from .generator import (
+from .audit import resolve_safe_summary, resolve_safe_title
+from .markdown import (
+    MONTHS_FR,
+    year_only,
+    month_year,
+    format_cv_date,
+    format_location,
+    is_database_cv,
+    format_achievement,
     extract_static_cv_sections,
     group_experience_bullets,
-    resolve_safe_summary,
-    resolve_safe_title,
-    _year_only as year_only,
-    _month_year as month_year,
-    _format_cv_date as format_cv_date,
-    _format_location as format_location,
-    _is_database_cv as is_database_cv,
-    _format_achievement as format_achievement,
     stack_for_source as experience_stack_for_source,
-    MONTHS_FR,
-)
-from .markdown import (
     build_offer_terms,
     rank_missions_by_relevance,
     select_relevant_projects,

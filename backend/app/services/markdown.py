@@ -13,7 +13,7 @@ from .text_utils import normalize_text
 
 # ── Utilitaires dates et format ───────────────────────────────────────────────
 
-def _year_only(value: Any) -> str:
+def year_only(value: Any) -> str:
     value = str(value or "").strip()
     return value[:4] if len(value) >= 4 else value
 
@@ -25,44 +25,44 @@ MONTHS_FR = {
 }
 
 
-def _month_year(value: Any) -> str:
+def month_year(value: Any) -> str:
     value = str(value or "").strip()
     match = re.match(r"^(\d{4})-(\d{2})", value)
     if not match:
-        return _year_only(value)
+        return year_only(value)
     year, month = match.groups()
     month_name = MONTHS_FR.get(month)
     return f"{month_name} {year}" if month_name else year
 
 
-def _format_cv_date(start: Any, end: Any, is_current: bool = False) -> str:
-    start_year = _year_only(start)
-    end_year = "présent" if is_current else _year_only(end)
+def format_cv_date(start: Any, end: Any, is_current: bool = False) -> str:
+    start_year = year_only(start)
+    end_year = "présent" if is_current else year_only(end)
     if start_year and end_year:
         if start_year == end_year:
-            start_month = _month_year(start)
-            end_month = _month_year(end)
+            start_month = month_year(start)
+            end_month = month_year(end)
             if start_month and end_month and start_month != start_year and end_month != end_year:
                 return start_month if start_month == end_month else f"{start_month.split()[0]}-{end_month}"
             return start_year
         return f"{start_year}-{end_year}"
-    single_date = _month_year(start or end)
+    single_date = month_year(start or end)
     return single_date or start_year or end_year
 
 
-def _format_location(value: Any) -> str:
+def format_location(value: Any) -> str:
     if isinstance(value, dict):
         return ", ".join(part for part in [value.get("city"), value.get("country")] if part)
     return str(value or "")
 
 
-def _is_database_cv(cv_master: Any) -> bool:
+def is_database_cv(cv_master: Any) -> bool:
     return isinstance(cv_master, dict) and isinstance(cv_master.get("profile"), dict) and (
         "firstName" in cv_master["profile"] or "lastName" in cv_master["profile"]
     )
 
 
-def _format_achievement(achievement: Any) -> str:
+def format_achievement(achievement: Any) -> str:
     if not isinstance(achievement, dict):
         return str(achievement or "").strip()
     description = str(achievement.get("description") or "").strip()
@@ -243,7 +243,7 @@ def format_project_entry(proj: Dict[str, Any]) -> Dict[str, Any]:
     if len(short_desc) > 150:
         short_desc = short_desc[:147].rstrip() + "…"
     techs = [str(t).strip() for t in proj.get("technologies", []) if str(t).strip()][:6]
-    date = _format_cv_date(proj.get("startDate"), proj.get("endDate"))
+    date = format_cv_date(proj.get("startDate"), proj.get("endDate"))
     return {"name": name, "description": short_desc, "technologies": techs, "date": date}
 
 
@@ -328,7 +328,7 @@ def generate_database_recruiter_markdown(
 
     contact_items = [
         full_name,
-        _format_location(profile.get("location")),
+        format_location(profile.get("location")),
         contact.get("email"),
         contact.get("phone"),
         contact.get("github"),
@@ -367,8 +367,8 @@ def generate_database_recruiter_markdown(
     lines.append("## Experiences")
     lines.append("")
     for exp in cv_master.get("experiences", []):
-        date = _format_cv_date(exp.get("startDate"), exp.get("endDate"), bool(exp.get("isCurrent")))
-        location = _format_location(exp.get("location"))
+        date = format_cv_date(exp.get("startDate"), exp.get("endDate"), bool(exp.get("isCurrent")))
+        location = format_location(exp.get("location"))
         header_parts = [exp.get("position"), exp.get("company"), location, date]
         lines.append(f"### {' - '.join(part for part in header_parts if part)}")
         if exp.get("summary"):
@@ -377,7 +377,7 @@ def generate_database_recruiter_markdown(
         for mission in rank_missions_by_relevance(exp.get("missions", []), offer_terms, limit=3):
             lines.append(f"- {mission}")
         for achievement in exp.get("achievements", [])[:2]:
-            text = _format_achievement(achievement)
+            text = format_achievement(achievement)
             if text:
                 lines.append(f"- {text}")
         technologies = exp.get("technologies", [])
@@ -407,7 +407,7 @@ def generate_database_recruiter_markdown(
         lines.append("## Formation")
         lines.append("")
         for edu in education[:4]:
-            date = _format_cv_date(edu.get("startDate"), edu.get("endDate"), bool(edu.get("isCurrent")))
+            date = format_cv_date(edu.get("startDate"), edu.get("endDate"), bool(edu.get("isCurrent")))
             parts = [edu.get("school"), edu.get("degree"), date]
             lines.append(f"- **{' - '.join(part for part in parts if part)}**")
         lines.append("")
@@ -436,7 +436,7 @@ def generate_recruiter_markdown(
     id_to_evidence: Dict[str, Dict[str, Any]],
     cv_master: Dict[str, Any] | None = None,
 ) -> str:
-    if _is_database_cv(cv_master):
+    if is_database_cv(cv_master):
         return generate_database_recruiter_markdown(matching, generated, audit, cv_master)
 
     cv = generated.get("targeted_cv", {})

@@ -84,19 +84,19 @@ def upload_cv(payload: UploadCVRequest):
     return {"status": "saved", "path": str(settings.cv_path)}
 
 
+def _do_index_cv() -> dict:
+    cv_master = load_cv_master()
+    evidence_bank = build_evidence_bank(cv_master)
+    index_evidence(settings.sqlite_path, evidence_bank)
+    evidence_path = settings.output_dir / "evidence_bank.json"
+    evidence_path.write_text(json.dumps(evidence_bank, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"status": "indexed", "count": len(evidence_bank), "evidence_file": str(evidence_path)}
+
+
 @app.post("/api/index-cv")
 def index_cv():
     try:
-        cv_master = load_cv_master()
-        evidence_bank = build_evidence_bank(cv_master)
-        index_evidence(settings.sqlite_path, evidence_bank)
-        evidence_path = settings.output_dir / "evidence_bank.json"
-        evidence_path.write_text(json.dumps(evidence_bank, ensure_ascii=False, indent=2), encoding="utf-8")
-        return {
-            "status": "indexed",
-            "count": len(evidence_bank),
-            "evidence_file": str(evidence_path),
-        }
+        return _do_index_cv()
     except Exception as exc:
         logger.exception("Erreur lors de l'indexation du CV")
         raise HTTPException(status_code=500, detail="Erreur lors de l'indexation. Vérifiez les logs.")
@@ -121,8 +121,7 @@ def retrieve(payload: JobRequest):
 @app.post("/api/generate-cv")
 def generate_cv(payload: JobRequest):
     if not has_index(settings.sqlite_path):
-        # Auto-index si possible
-        index_cv()
+        _do_index_cv()
 
     matching_model = payload.matching_model or settings.matching_model
     generation_model = payload.generation_model or payload.model or settings.generation_model
@@ -520,7 +519,6 @@ def update_pdf(payload: UpdatePdfRequest):
 
 @app.get("/api/history")
 def get_history():
-    init_history_db(settings.history_db_path)
     return {"items": list_generations(settings.history_db_path)}
 
 

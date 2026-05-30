@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
 
@@ -30,9 +30,3 @@ class UploadCVRequest(BaseModel):
     cv_master: Dict[str, Any]
 
 
-class GenerateResponse(BaseModel):
-    matching: Dict[str, Any]
-    generated_cv: Dict[str, Any]
-    audit: Dict[str, Any]
-    final_markdown: str
-    output_files: Dict[str, str]
