@@ -522,19 +522,19 @@ def build_rendercv_yaml_data(
     profile_contact = profile.get("contact", {}) if database_mode else {}
 
     if database_mode:
-        name = " ".join(part for part in [profile.get("firstName"), profile.get("lastName")] if part) or "Bilel BEN ROKIA"
+        name = " ".join(part for part in [profile.get("firstName"), profile.get("lastName")] if part) or None
         location = format_location(profile.get("location"))
         email = profile_contact.get("email")
         phone = profile_contact.get("phone")
-        github = profile_contact.get("github") or "https://github.com/Helbii"
-        linkedin = profile_contact.get("linkedin") or "www.linkedin.com/in/bilel-ben-rokia"
+        github = profile_contact.get("github") or None
+        linkedin = profile_contact.get("linkedin") or None
     else:
-        name = identity.get("nom") or "Bilel BEN ROKIA"
+        name = identity.get("nom") or None
         location = ", ".join(static_sections["locations"])
         email = contact.get("email")
         phone = contact.get("telephone")
-        github = contact.get("github") or "https://github.com/Helbii"
-        linkedin = contact.get("linkedin") or "www.linkedin.com/in/bilel-ben-rokia"
+        github = contact.get("github") or None
+        linkedin = contact.get("linkedin") or None
 
     sections: Dict[str, List[Any]] = {
         "Résumé": [resolve_safe_summary(generated, audit, matching)],
@@ -591,6 +591,12 @@ def build_rendercv_yaml_data(
     elif static_sections["languages"]:
         sections["Langues"] = [{"label": "Langues", "details": " | ".join(static_sections["languages"])}]
 
+    social_networks = []
+    if github:
+        social_networks.append({"network": "GitHub", "username": social_username(github, "GitHub")})
+    if linkedin:
+        social_networks.append({"network": "LinkedIn", "username": social_username(linkedin, "LinkedIn")})
+
     return prune_empty({
         "cv": {
             "name": name,
@@ -598,10 +604,7 @@ def build_rendercv_yaml_data(
             "location": location,
             "email": email,
             "phone": phone,
-            "social_networks": [
-                {"network": "GitHub", "username": social_username(github, "GitHub")},
-                {"network": "LinkedIn", "username": social_username(linkedin, "LinkedIn")},
-            ],
+            "social_networks": social_networks or None,
             "sections": sections,
         },
         "design": build_design(),
