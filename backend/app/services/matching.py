@@ -2,95 +2,29 @@
 Extraction et classification des exigences d'une offre d'emploi,
 pipeline de matching et calcul du score ATS.
 """
+import json
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from .semantic_graph import find_best_semantic_evidence
 from .text_utils import normalize_text
 
+# ── Chargement de la configuration métier ─────────────────────────────────────
+_CONFIG_PATH = Path(__file__).parent.parent / "config" / "matching_config.json"
+_CFG: Dict = json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
 
 # ── Constantes ────────────────────────────────────────────────────────────────
 
-GENERIC_STOPWORDS = {
-    "avec", "afin", "ainsi", "alors", "autres", "avez", "avoir", "besoin", "bonne", "bonnes",
-    "candidat", "candidature", "chez", "comme", "competence", "competences", "connaissance",
-    "connaissances", "dans", "demande", "demandes", "emploi", "entreprise", "equipe",
-    "equipes", "etre", "faire", "formation", "grace", "heures", "interne", "leurs", "mission",
-    "missions", "nous", "offre", "outil", "outils", "participer", "poste", "pour", "profil",
-    "projet", "projets", "recherche", "recherchons", "secteur", "selon", "travail", "vous",
-    "developpeur", "developpeuse", "ingenieur", "ingenieure", "junior", "senior", "confirme",
-    "confirmee", "souhaitant", "evoluer",
-    "paris", "arrondissement", "localiser", "mappy", "publie", "publié", "localisation",
-}
-
-INVALID_REQUIREMENT_PHRASES = {
-    "h/f", "hf", "75", "paris la", "paris", "arrondissement", "localiser", "mappy",
-    "product owner", "developpement et l'evolution", "vos", "recueillir", "proposer",
-    "creer ou modifier", "developper des composants specifiques avec",
-}
-
-LOCATION_NOISE_TERMS = {
-    "paris", "lyon", "marseille", "toulouse", "nice", "nantes", "montpellier",
-    "strasbourg", "bordeaux", "lille", "arrondissement", "localiser", "mappy",
-    "publie", "publication", "localisation", "teletravail", "site",
-}
-
-# Termes contractuels qui ne sont jamais des exigences techniques
-CONTRACTUAL_NOISE_TERMS = {
-    "heures", "heure", "hebdomadaire", "semaine",
-    "cdi", "cdd", "alternance", "apprentissage", "interim",
-    "tjm", "salaire", "remuneration", "avantages", "rtt", "rtts",
-    "risques", "contraintes", "ecran",
-    "bts", "dut", "iut", "licence", "master",
-    "handicap", "obligation", "beneficiaires",
-}
-
-GENERIC_REQUIREMENT_HINTS = [
-    "support technique", "support applicatif", "analyse d'incidents", "documentation technique",
-    "gestion de projet", "tests", "recette", "maintenance", "optimisation",
-    "developpement logiciel", "developpement web", "developpement applicatif",
-    "frontend", "front-end", "react", "javascript", "typescript", "interface web",
-    "agile", "user stories", "ux", "design system", "accessibilite", "tests unitaires",
-    "api", "rest", "soap", "sql", "cloud", "devops", "cybersecurite", "data", "ia",
-    "crm", "erp", "automatisation", "anglais",
-]
-
-TITLE_UNSAFE_IF_NOT_CONFIRMED = {
-    "sap", "peoplesoft", "jenkins", "ansible", "nexus", "xldeploy", "perl", "php",
-    "peoplecode", "application engine", "component interface", "sqr", "pl/sql", "plsql",
-    "react", "react.js", "typescript", "angular", "vue", "java", ".net", "c#",
-    "javascript", "node.js", "nodejs", "ruby", "golang", "swift", "kotlin",
-}
-
-SAFE_TITLE_QUALIFIERS = [
-    "react", "frontend", "front-end", "interface web", "javascript", "typescript",
-    "full-stack", "backend", "api", "web", "ux", "agile", "support applicatif",
-    "production informatique", "exploitation si", "automatisation", "linux", "devops",
-    "python", "anglais", "maintenance",
-]
-
-SAFE_CONTEXT_TERMS = {
-    "junior": ["junior", "profil junior"],
-    "client": ["client", "intervenir chez un client"],
-    "hybride": ["hybride", "teletravail", "télétravail"],
-    "production informatique": ["production informatique", "ingenieur de production"],
-    "support applicatif": ["support applicatif", "support technique applicatif"],
-    "systeme d'information": ["systeme d'information", "système d'information", " si "],
-    "anglais professionnel": ["anglais", "oral", "ecrit", "écrit"],
-    "front-end": ["front-end", "frontend", "front end"],
-    "react": ["react", "react.js", "reactjs"],
-    "interface web": ["interface", "interfaces", "application metier", "application métier"],
-    "agile": ["agile", "ceremonies agile", "cérémonies agile", "grooming"],
-    "user stories": ["user stories", "user story"],
-    "ux": ["ux", "experience utilisateur", "expérience utilisateur"],
-    "design system": ["design system"],
-    "accessibilite": ["accessibilite", "accessibilité"],
-    "eco-conception": ["eco-conception", "éco-conception"],
-    "performance web": ["performance"],
-    "tests unitaires": ["tests unitaires", "test unitaire"],
-    "rgpd": ["rgpd"],
-    "mise en production": ["mise en production", "mises en production"],
-}
+GENERIC_STOPWORDS: Set[str] = set(_CFG["generic_stopwords"])
+INVALID_REQUIREMENT_PHRASES: Set[str] = set(_CFG["invalid_requirement_phrases"])
+LOCATION_NOISE_TERMS: Set[str] = set(_CFG["location_noise_terms"])
+CONTRACTUAL_NOISE_TERMS: Set[str] = set(_CFG["contractual_noise_terms"])
+GENERIC_REQUIREMENT_HINTS: List[str] = _CFG["generic_requirement_hints"]
+TITLE_UNSAFE_IF_NOT_CONFIRMED: Set[str] = set(_CFG["title_unsafe_if_not_confirmed"])
+SAFE_TITLE_QUALIFIERS: List[str] = _CFG["safe_title_qualifiers"]
+SAFE_CONTEXT_TERMS: Dict[str, List[str]] = _CFG["safe_context_terms"]
+REQUIREMENT_EXPANSIONS: Dict[str, List[str]] = _CFG["requirement_expansions"]
 
 
 # ── Score de matching ─────────────────────────────────────────────────────────
@@ -676,17 +610,21 @@ def _add_requirement(requirements: List[str], seen: Set[str], value: str) -> Non
 
 
 def compact_requirements(requirements: List[str], max_items: int) -> List[str]:
+    # Pre-normalize once — avoids O(n^2) calls to normalize_text
+    pairs = [(req, normalize_text(req)) for req in requirements]
+    short_norms = {norm for req, norm in pairs if len(req.split()) <= 5}
+
+    seen: Set[str] = set()
     cleaned: List[str] = []
-    for req in requirements:
-        normalized_req = normalize_text(req)
+    for req, norm_req in pairs:
         if any(
-            normalized_req != normalize_text(other)
-            and re.search(r"\b" + re.escape(normalized_req) + r"\b", normalize_text(other))
-            and len(other.split()) <= 5
-            for other in requirements
+            norm_req != short_norm
+            and re.search(r"\b" + re.escape(norm_req) + r"\b", short_norm)
+            for short_norm in short_norms
         ):
             continue
-        if req not in cleaned:
+        if norm_req not in seen:
+            seen.add(norm_req)
             cleaned.append(req)
     return cleaned[:max_items]
 
@@ -803,133 +741,6 @@ def infer_recommended_title(job_offer: str, evidence_bank: List[Dict[str, Any]])
     return "CV cible"
 
 
-# ── Expansion sémantique : vocabulaire offre → vocabulaire CV ────────────────
-# Clé = terme normalisé d'une offre d'emploi
-# Valeur = termes alternatifs susceptibles d'apparaître dans le CV du candidat
-REQUIREMENT_EXPANSIONS: Dict[str, List[str]] = {
-    # CI/CD & DevOps outils
-    "jenkins":              ["CI/CD", "pipeline", "automatisation", "déploiement", "DevOps"],
-    "gitlab ci":            ["CI/CD", "Git", "pipeline", "DevOps", "intégration continue"],
-    "github actions":       ["CI/CD", "Git", "pipeline", "automatisation", "DevOps"],
-    "ansible":              ["automatisation", "infrastructure", "déploiement", "configuration", "DevOps"],
-    "terraform":            ["infrastructure", "cloud", "déploiement", "DevOps", "automatisation"],
-    "kubernetes":           ["Docker", "orchestration", "cloud", "conteneur", "DevOps"],
-    "docker":               ["conteneur", "Linux", "infrastructure", "DevOps", "déploiement"],
-    "nexus":                ["artifacts", "CI/CD", "DevOps", "dépendances"],
-    "xldeploy":             ["déploiement", "CI/CD", "automatisation", "DevOps"],
-    "helm":                 ["Kubernetes", "DevOps", "déploiement", "cloud"],
-    # Domaines DevOps génériques
-    "devops":               ["CI/CD", "Jenkins", "Docker", "Git", "Linux", "automatisation", "déploiement"],
-    "ci/cd":                ["Jenkins", "pipeline", "automatisation", "déploiement", "intégration continue"],
-    "cicd":                 ["Jenkins", "pipeline", "automatisation", "déploiement"],
-    "automatisation":       ["script", "Python", "Bash", "CI/CD", "pipeline"],
-    "infrastructure":       ["Linux", "Docker", "cloud", "DevOps", "serveur", "déploiement"],
-    # Python ecosystem
-    "flask":                ["Python", "API", "REST", "backend", "web", "serveur"],
-    "django":               ["Python", "API", "REST", "backend", "web", "ORM"],
-    "fastapi":              ["Python", "API", "REST", "backend", "asynchrone"],
-    "celery":               ["Python", "tâches asynchrones", "pipeline", "backend"],
-    "sqlalchemy":           ["Python", "ORM", "base de données", "SQL"],
-    "pandas":               ["Python", "données", "data", "analyse", "traitement"],
-    "numpy":                ["Python", "calcul", "données", "scientifique"],
-    "opencv":               ["Python", "traitement d'images", "vision", "C++"],
-    "scikit-learn":         ["Machine Learning", "Python", "données", "modèle"],
-    "pytorch":              ["Deep Learning", "IA", "Python", "réseau de neurones"],
-    "tensorflow":           ["Deep Learning", "IA", "Python", "réseau de neurones"],
-    "pytest":               ["Python", "tests", "qualité", "TDD"],
-    "pydantic":             ["Python", "validation", "API", "backend"],
-    # JavaScript ecosystem
-    "react":                ["JavaScript", "TypeScript", "frontend", "interface", "web", "composants"],
-    "react.js":             ["JavaScript", "TypeScript", "frontend", "interface", "web"],
-    "vue":                  ["JavaScript", "TypeScript", "frontend", "interface", "web"],
-    "angular":              ["JavaScript", "TypeScript", "frontend", "interface", "web"],
-    "node.js":              ["JavaScript", "backend", "API", "web", "serveur"],
-    "nodejs":               ["JavaScript", "backend", "API", "web"],
-    "express":              ["JavaScript", "Node.js", "backend", "API", "REST"],
-    "typescript":           ["JavaScript", "frontend", "typage", "interface"],
-    "next.js":              ["React", "JavaScript", "frontend", "web", "SSR"],
-    # Java ecosystem
-    "spring":               ["Java", "backend", "API", "REST", "microservices"],
-    "hibernate":            ["Java", "ORM", "base de données", "SQL"],
-    "maven":                ["Java", "build", "dépendances", "CI/CD"],
-    # Bases de données
-    "postgresql":           ["SQL", "base de données", "requête", "schéma"],
-    "mysql":                ["SQL", "base de données", "requête"],
-    "oracle":               ["SQL", "PL/SQL", "base de données", "requête"],
-    "mongodb":              ["NoSQL", "base de données", "document", "JavaScript"],
-    "redis":                ["cache", "NoSQL", "base de données", "performance"],
-    "elasticsearch":        ["recherche", "indexation", "logs", "NoSQL"],
-    "influxdb":             ["time-series", "monitoring", "IoT", "métriques"],
-    "sql":                  ["base de données", "requête", "PostgreSQL", "MySQL", "Oracle"],
-    "nosql":                ["MongoDB", "Redis", "Elasticsearch", "base de données"],
-    "pl/sql":               ["SQL", "Oracle", "procédure stockée", "base de données"],
-    "plsql":                ["SQL", "Oracle", "procédure stockée", "base de données"],
-    # Cloud
-    "aws":                  ["cloud", "infrastructure", "S3", "EC2", "déploiement"],
-    "azure":                ["cloud", "infrastructure", "Microsoft", "déploiement"],
-    "gcp":                  ["cloud", "infrastructure", "Google", "déploiement"],
-    "cloud":                ["AWS", "Azure", "GCP", "infrastructure", "déploiement", "serveur"],
-    # ERP & CRM
-    "sap":                  ["ERP", "gestion", "système d'information"],
-    "peoplesoft":           ["ERP", "gestion", "système d'information"],
-    "salesforce":           ["CRM", "gestion client"],
-    "odoo":                 ["ERP", "gestion", "Python", "système d'information"],
-    "erp":                  ["SAP", "gestion", "système d'information"],
-    "crm":                  ["Salesforce", "gestion client"],
-    # ERP-specific tools
-    "peoplecode":           ["ERP", "développement", "PeopleSoft"],
-    "application engine":   ["ERP", "batch", "PeopleSoft", "traitement"],
-    "integration broker":   ["ERP", "intégration", "API", "échanges", "PeopleSoft"],
-    "sqr":                  ["ERP", "reporting", "PeopleSoft", "SQL"],
-    "component interface":  ["ERP", "intégration", "PeopleSoft", "composant"],
-    # IoT & embarqué
-    "iot":                  ["embarqué", "capteurs", "acquisition", "temps réel", "industriel"],
-    "embarque":             ["IoT", "capteurs", "acquisition", "temps réel", "Arduino"],
-    "arduino":              ["embarqué", "IoT", "capteurs", "C++", "temps réel"],
-    "raspberry":            ["embarqué", "Linux", "IoT", "Python"],
-    "mqtt":                 ["IoT", "protocole", "embarqué", "messagerie", "capteurs"],
-    # Data & IA
-    "machine learning":     ["IA", "modèle", "données", "Python", "scikit", "apprentissage"],
-    "deep learning":        ["réseau de neurones", "IA", "PyTorch", "TensorFlow"],
-    "data engineering":     ["pipeline", "ETL", "données", "Python", "SQL", "Spark"],
-    "mlops":                ["DevOps", "Machine Learning", "pipeline", "déploiement", "modèle"],
-    "spark":                ["big data", "données", "Python", "Java", "traitement distribué"],
-    "airflow":              ["pipeline", "orchestration", "Python", "ETL", "données"],
-    # Langages
-    "perl":                 ["script", "automatisation", "Linux", "traitement texte"],
-    "php":                  ["web", "backend", "API", "serveur"],
-    "c#":                   [".NET", "Microsoft", "backend", "API"],
-    ".net":                 ["C#", "Microsoft", "backend", "API"],
-    "golang":               ["Go", "backend", "microservices", "API"],
-    "bash":                 ["Linux", "shell", "script", "automatisation"],
-    "shell":                ["Linux", "Bash", "script", "automatisation"],
-    "powershell":           ["Windows", "script", "automatisation", "administration"],
-    # Monitoring & observabilité
-    "prometheus":           ["monitoring", "métriques", "observabilité", "Grafana"],
-    "grafana":              ["monitoring", "métriques", "observabilité", "visualisation"],
-    "elk":                  ["logs", "Elasticsearch", "monitoring", "analyse"],
-    "datadog":              ["monitoring", "observabilité", "APM", "métriques"],
-    # Tests
-    "selenium":             ["tests", "automatisation", "frontend", "qualité", "navigateur"],
-    "cypress":              ["tests", "frontend", "JavaScript", "qualité"],
-    "junit":                ["tests", "Java", "qualité", "TDD"],
-    "sonarqube":            ["qualité", "code", "analyse statique", "CI/CD"],
-    # Architecture & protocoles
-    "microservices":        ["API", "REST", "Docker", "Kubernetes", "architecture"],
-    "soap":                 ["XML", "web service", "intégration", "API"],
-    "graphql":              ["API", "JavaScript", "React", "backend"],
-    "kafka":                ["messagerie", "streaming", "pipeline", "données", "microservices"],
-    "rabbitmq":             ["messagerie", "file", "microservices", "asynchrone"],
-    # Support & exploitation
-    "support applicatif":   ["analyse d'incidents", "diagnostic", "résolution", "support"],
-    "support technique":    ["analyse d'incidents", "diagnostic", "résolution", "support"],
-    "analyse incidents":    ["support", "diagnostic", "logs", "résolution"],
-    "production informatique": ["support", "exploitation", "monitoring", "infrastructure"],
-    # Collaboration & Agile
-    "jira":                 ["gestion de projet", "Agile", "Scrum", "tickets"],
-    "confluence":           ["documentation", "wiki", "collaboration", "Agile"],
-    "scrum":                ["Agile", "sprint", "gestion de projet", "ceremonies"],
-}
 
 
 def _expand_requirement(normalized_requirement: str) -> List[str]:

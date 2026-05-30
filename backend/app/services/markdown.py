@@ -57,7 +57,12 @@ def format_location(value: Any) -> str:
 
 
 def is_database_cv(cv_master: Any) -> bool:
-    return isinstance(cv_master, dict) and isinstance(cv_master.get("profile"), dict) and (
+    if not isinstance(cv_master, dict):
+        return False
+    schema_type = cv_master.get("schema_type", "")
+    if schema_type:
+        return schema_type == "database"
+    return isinstance(cv_master.get("profile"), dict) and (
         "firstName" in cv_master["profile"] or "lastName" in cv_master["profile"]
     )
 

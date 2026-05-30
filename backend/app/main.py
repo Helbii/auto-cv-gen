@@ -64,6 +64,16 @@ def load_cv_master() -> dict:
     return json.loads(settings.cv_path.read_text(encoding="utf-8"))
 
 
+@app.get("/api/config")
+def get_config():
+    from .services.rendercv_export import DESIGN_PRESETS
+    return {
+        "matching_model": settings.matching_model,
+        "generation_model": settings.generation_model,
+        "design_presets": DESIGN_PRESETS,
+    }
+
+
 @app.get("/health")
 def health():
     return {

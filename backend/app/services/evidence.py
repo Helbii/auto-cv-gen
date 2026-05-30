@@ -297,14 +297,23 @@ def build_rich_evidence(cv: Dict[str, Any], bank: List[Dict[str, Any]]) -> None:
 
 def build_evidence_bank(cv: Dict[str, Any]) -> List[Dict[str, Any]]:
     bank: List[Dict[str, Any]] = []
-    is_database_schema = isinstance(cv.get("profile"), dict) and (
-        "firstName" in cv.get("profile", {}) or "lastName" in cv.get("profile", {})
-    )
-    if is_database_schema:
+    schema_type = cv.get("schema_type", "")
+
+    if schema_type == "database" or (
+        not schema_type
+        and isinstance(cv.get("profile"), dict)
+        and ("firstName" in cv["profile"] or "lastName" in cv["profile"])
+    ):
         build_database_evidence(cv, bank)
-    elif any(key in cv for key in ["profil", "formations", "langues", "competences", "projets_realises"]):
+    elif schema_type == "rich" or (
+        not schema_type
+        and any(key in cv for key in ["profil", "formations", "langues", "competences", "projets_realises"])
+    ):
         build_rich_evidence(cv, bank)
-    elif any(key in cv for key in ["profile", "education", "skills", "languages", "projects_and_themes"]):
+    elif schema_type == "legacy" or (
+        not schema_type
+        and any(key in cv for key in ["profile", "education", "skills", "languages", "projects_and_themes"])
+    ):
         build_legacy_evidence(cv, bank)
     return bank
 

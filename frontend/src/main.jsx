@@ -59,8 +59,12 @@ function App() {
   const [activeHistoryId, setActiveHistoryId] = useState(null);
   const [editedMarkdown, setEditedMarkdown]   = useState({});
   const [hiddenSections, setHiddenSections]   = useState({});
+  const [serverConfig, setServerConfig]       = useState(null);
 
-  useEffect(() => { fetchHistory(); }, []);
+  useEffect(() => {
+    fetchHistory();
+    fetch("/api/config").then(r => r.json()).then(setServerConfig).catch(() => {});
+  }, []);
 
   async function fetchHistory() {
     try {
@@ -345,12 +349,16 @@ function App() {
     }
   }
   function applyDesignPreset(mode) {
-    const presets = {
-      fill:    { preset: "airy",    font_size: 9.75, margin: "large",   section_spacing: 0.26, entry_spacing: 0.72, bullet_spacing: 0.06 },
-      compact: { preset: "compact", font_size: 8.75, margin: "compact", section_spacing: 0.16, entry_spacing: 0.46, bullet_spacing: 0.035 },
-      tech:    { preset: "tech",    font_size: 9.15, margin: "normal",  section_spacing: 0.18, entry_spacing: 0.52, bullet_spacing: 0.04 },
-    };
-    setPdfDesign(design => ({ ...design, ...(presets[mode] || {}) }));
+    const modeToPreset = { fill: "airy", compact: "compact", tech: "tech" };
+    const presetName = modeToPreset[mode];
+    if (!presetName) return;
+    const backendPresets = serverConfig?.design_presets;
+    const preset = backendPresets?.[presetName] ?? {
+      fill:    { font_size: 9.75, margin: "large",   section_spacing: 0.26, entry_spacing: 0.72, bullet_spacing: 0.06 },
+      compact: { font_size: 8.75, margin: "compact", section_spacing: 0.16, entry_spacing: 0.46, bullet_spacing: 0.035 },
+      tech:    { font_size: 9.15, margin: "normal",  section_spacing: 0.18, entry_spacing: 0.52, bullet_spacing: 0.04 },
+    }[mode];
+    if (preset) setPdfDesign(design => ({ ...design, preset: presetName, ...preset }));
   }
 
   const audit = result?.audit;

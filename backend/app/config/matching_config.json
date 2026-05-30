@@ -1,0 +1,990 @@
+{
+  "generic_stopwords": [
+    "afin",
+    "ainsi",
+    "alors",
+    "arrondissement",
+    "autres",
+    "avec",
+    "avez",
+    "avoir",
+    "besoin",
+    "bonne",
+    "bonnes",
+    "candidat",
+    "candidature",
+    "chez",
+    "comme",
+    "competence",
+    "competences",
+    "confirme",
+    "confirmee",
+    "connaissance",
+    "connaissances",
+    "dans",
+    "demande",
+    "demandes",
+    "developpeur",
+    "developpeuse",
+    "emploi",
+    "entreprise",
+    "equipe",
+    "equipes",
+    "etre",
+    "evoluer",
+    "faire",
+    "formation",
+    "grace",
+    "heures",
+    "ingenieur",
+    "ingenieure",
+    "interne",
+    "junior",
+    "leurs",
+    "localisation",
+    "localiser",
+    "mappy",
+    "mission",
+    "missions",
+    "nous",
+    "offre",
+    "outil",
+    "outils",
+    "paris",
+    "participer",
+    "poste",
+    "pour",
+    "profil",
+    "projet",
+    "projets",
+    "publie",
+    "publié",
+    "recherche",
+    "recherchons",
+    "secteur",
+    "selon",
+    "senior",
+    "souhaitant",
+    "travail",
+    "vous"
+  ],
+  "invalid_requirement_phrases": [
+    "75",
+    "arrondissement",
+    "creer ou modifier",
+    "developpement et l'evolution",
+    "developper des composants specifiques avec",
+    "h/f",
+    "hf",
+    "localiser",
+    "mappy",
+    "paris",
+    "paris la",
+    "product owner",
+    "proposer",
+    "recueillir",
+    "vos"
+  ],
+  "location_noise_terms": [
+    "arrondissement",
+    "bordeaux",
+    "lille",
+    "localisation",
+    "localiser",
+    "lyon",
+    "mappy",
+    "marseille",
+    "montpellier",
+    "nantes",
+    "nice",
+    "paris",
+    "publication",
+    "publie",
+    "site",
+    "strasbourg",
+    "teletravail",
+    "toulouse"
+  ],
+  "contractual_noise_terms": [
+    "alternance",
+    "apprentissage",
+    "avantages",
+    "beneficiaires",
+    "bts",
+    "cdd",
+    "cdi",
+    "contraintes",
+    "dut",
+    "ecran",
+    "handicap",
+    "hebdomadaire",
+    "heure",
+    "heures",
+    "interim",
+    "iut",
+    "licence",
+    "master",
+    "obligation",
+    "remuneration",
+    "risques",
+    "rtt",
+    "rtts",
+    "salaire",
+    "semaine",
+    "tjm"
+  ],
+  "generic_requirement_hints": [
+    "support technique",
+    "support applicatif",
+    "analyse d'incidents",
+    "documentation technique",
+    "gestion de projet",
+    "tests",
+    "recette",
+    "maintenance",
+    "optimisation",
+    "developpement logiciel",
+    "developpement web",
+    "developpement applicatif",
+    "frontend",
+    "front-end",
+    "react",
+    "javascript",
+    "typescript",
+    "interface web",
+    "agile",
+    "user stories",
+    "ux",
+    "design system",
+    "accessibilite",
+    "tests unitaires",
+    "api",
+    "rest",
+    "soap",
+    "sql",
+    "cloud",
+    "devops",
+    "cybersecurite",
+    "data",
+    "ia",
+    "crm",
+    "erp",
+    "automatisation",
+    "anglais"
+  ],
+  "title_unsafe_if_not_confirmed": [
+    ".net",
+    "angular",
+    "ansible",
+    "application engine",
+    "c#",
+    "component interface",
+    "golang",
+    "java",
+    "javascript",
+    "jenkins",
+    "kotlin",
+    "nexus",
+    "node.js",
+    "nodejs",
+    "peoplecode",
+    "peoplesoft",
+    "perl",
+    "php",
+    "pl/sql",
+    "plsql",
+    "react",
+    "react.js",
+    "ruby",
+    "sap",
+    "sqr",
+    "swift",
+    "typescript",
+    "vue",
+    "xldeploy"
+  ],
+  "safe_title_qualifiers": [
+    "react",
+    "frontend",
+    "front-end",
+    "interface web",
+    "javascript",
+    "typescript",
+    "full-stack",
+    "backend",
+    "api",
+    "web",
+    "ux",
+    "agile",
+    "support applicatif",
+    "production informatique",
+    "exploitation si",
+    "automatisation",
+    "linux",
+    "devops",
+    "python",
+    "anglais",
+    "maintenance"
+  ],
+  "safe_context_terms": {
+    "junior": [
+      "junior",
+      "profil junior"
+    ],
+    "client": [
+      "client",
+      "intervenir chez un client"
+    ],
+    "hybride": [
+      "hybride",
+      "teletravail",
+      "télétravail"
+    ],
+    "production informatique": [
+      "production informatique",
+      "ingenieur de production"
+    ],
+    "support applicatif": [
+      "support applicatif",
+      "support technique applicatif"
+    ],
+    "systeme d'information": [
+      "systeme d'information",
+      "système d'information",
+      " si "
+    ],
+    "anglais professionnel": [
+      "anglais",
+      "oral",
+      "ecrit",
+      "écrit"
+    ],
+    "front-end": [
+      "front-end",
+      "frontend",
+      "front end"
+    ],
+    "react": [
+      "react",
+      "react.js",
+      "reactjs"
+    ],
+    "interface web": [
+      "interface",
+      "interfaces",
+      "application metier",
+      "application métier"
+    ],
+    "agile": [
+      "agile",
+      "ceremonies agile",
+      "cérémonies agile",
+      "grooming"
+    ],
+    "user stories": [
+      "user stories",
+      "user story"
+    ],
+    "ux": [
+      "ux",
+      "experience utilisateur",
+      "expérience utilisateur"
+    ],
+    "design system": [
+      "design system"
+    ],
+    "accessibilite": [
+      "accessibilite",
+      "accessibilité"
+    ],
+    "eco-conception": [
+      "eco-conception",
+      "éco-conception"
+    ],
+    "performance web": [
+      "performance"
+    ],
+    "tests unitaires": [
+      "tests unitaires",
+      "test unitaire"
+    ],
+    "rgpd": [
+      "rgpd"
+    ],
+    "mise en production": [
+      "mise en production",
+      "mises en production"
+    ]
+  },
+  "requirement_expansions": {
+    "jenkins": [
+      "CI/CD",
+      "pipeline",
+      "automatisation",
+      "déploiement",
+      "DevOps"
+    ],
+    "gitlab ci": [
+      "CI/CD",
+      "Git",
+      "pipeline",
+      "DevOps",
+      "intégration continue"
+    ],
+    "github actions": [
+      "CI/CD",
+      "Git",
+      "pipeline",
+      "automatisation",
+      "DevOps"
+    ],
+    "ansible": [
+      "automatisation",
+      "infrastructure",
+      "déploiement",
+      "configuration",
+      "DevOps"
+    ],
+    "terraform": [
+      "infrastructure",
+      "cloud",
+      "déploiement",
+      "DevOps",
+      "automatisation"
+    ],
+    "kubernetes": [
+      "Docker",
+      "orchestration",
+      "cloud",
+      "conteneur",
+      "DevOps"
+    ],
+    "docker": [
+      "conteneur",
+      "Linux",
+      "infrastructure",
+      "DevOps",
+      "déploiement"
+    ],
+    "nexus": [
+      "artifacts",
+      "CI/CD",
+      "DevOps",
+      "dépendances"
+    ],
+    "xldeploy": [
+      "déploiement",
+      "CI/CD",
+      "automatisation",
+      "DevOps"
+    ],
+    "helm": [
+      "Kubernetes",
+      "DevOps",
+      "déploiement",
+      "cloud"
+    ],
+    "devops": [
+      "CI/CD",
+      "Jenkins",
+      "Docker",
+      "Git",
+      "Linux",
+      "automatisation",
+      "déploiement"
+    ],
+    "ci/cd": [
+      "Jenkins",
+      "pipeline",
+      "automatisation",
+      "déploiement",
+      "intégration continue"
+    ],
+    "cicd": [
+      "Jenkins",
+      "pipeline",
+      "automatisation",
+      "déploiement"
+    ],
+    "automatisation": [
+      "script",
+      "Python",
+      "Bash",
+      "CI/CD",
+      "pipeline"
+    ],
+    "infrastructure": [
+      "Linux",
+      "Docker",
+      "cloud",
+      "DevOps",
+      "serveur",
+      "déploiement"
+    ],
+    "flask": [
+      "Python",
+      "API",
+      "REST",
+      "backend",
+      "web",
+      "serveur"
+    ],
+    "django": [
+      "Python",
+      "API",
+      "REST",
+      "backend",
+      "web",
+      "ORM"
+    ],
+    "fastapi": [
+      "Python",
+      "API",
+      "REST",
+      "backend",
+      "asynchrone"
+    ],
+    "celery": [
+      "Python",
+      "tâches asynchrones",
+      "pipeline",
+      "backend"
+    ],
+    "sqlalchemy": [
+      "Python",
+      "ORM",
+      "base de données",
+      "SQL"
+    ],
+    "pandas": [
+      "Python",
+      "données",
+      "data",
+      "analyse",
+      "traitement"
+    ],
+    "numpy": [
+      "Python",
+      "calcul",
+      "données",
+      "scientifique"
+    ],
+    "opencv": [
+      "Python",
+      "traitement d'images",
+      "vision",
+      "C++"
+    ],
+    "scikit-learn": [
+      "Machine Learning",
+      "Python",
+      "données",
+      "modèle"
+    ],
+    "pytorch": [
+      "Deep Learning",
+      "IA",
+      "Python",
+      "réseau de neurones"
+    ],
+    "tensorflow": [
+      "Deep Learning",
+      "IA",
+      "Python",
+      "réseau de neurones"
+    ],
+    "pytest": [
+      "Python",
+      "tests",
+      "qualité",
+      "TDD"
+    ],
+    "pydantic": [
+      "Python",
+      "validation",
+      "API",
+      "backend"
+    ],
+    "react": [
+      "JavaScript",
+      "TypeScript",
+      "frontend",
+      "interface",
+      "web",
+      "composants"
+    ],
+    "react.js": [
+      "JavaScript",
+      "TypeScript",
+      "frontend",
+      "interface",
+      "web"
+    ],
+    "vue": [
+      "JavaScript",
+      "TypeScript",
+      "frontend",
+      "interface",
+      "web"
+    ],
+    "angular": [
+      "JavaScript",
+      "TypeScript",
+      "frontend",
+      "interface",
+      "web"
+    ],
+    "node.js": [
+      "JavaScript",
+      "backend",
+      "API",
+      "web",
+      "serveur"
+    ],
+    "nodejs": [
+      "JavaScript",
+      "backend",
+      "API",
+      "web"
+    ],
+    "express": [
+      "JavaScript",
+      "Node.js",
+      "backend",
+      "API",
+      "REST"
+    ],
+    "typescript": [
+      "JavaScript",
+      "frontend",
+      "typage",
+      "interface"
+    ],
+    "next.js": [
+      "React",
+      "JavaScript",
+      "frontend",
+      "web",
+      "SSR"
+    ],
+    "spring": [
+      "Java",
+      "backend",
+      "API",
+      "REST",
+      "microservices"
+    ],
+    "hibernate": [
+      "Java",
+      "ORM",
+      "base de données",
+      "SQL"
+    ],
+    "maven": [
+      "Java",
+      "build",
+      "dépendances",
+      "CI/CD"
+    ],
+    "postgresql": [
+      "SQL",
+      "base de données",
+      "requête",
+      "schéma"
+    ],
+    "mysql": [
+      "SQL",
+      "base de données",
+      "requête"
+    ],
+    "oracle": [
+      "SQL",
+      "PL/SQL",
+      "base de données",
+      "requête"
+    ],
+    "mongodb": [
+      "NoSQL",
+      "base de données",
+      "document",
+      "JavaScript"
+    ],
+    "redis": [
+      "cache",
+      "NoSQL",
+      "base de données",
+      "performance"
+    ],
+    "elasticsearch": [
+      "recherche",
+      "indexation",
+      "logs",
+      "NoSQL"
+    ],
+    "influxdb": [
+      "time-series",
+      "monitoring",
+      "IoT",
+      "métriques"
+    ],
+    "sql": [
+      "base de données",
+      "requête",
+      "PostgreSQL",
+      "MySQL",
+      "Oracle"
+    ],
+    "nosql": [
+      "MongoDB",
+      "Redis",
+      "Elasticsearch",
+      "base de données"
+    ],
+    "pl/sql": [
+      "SQL",
+      "Oracle",
+      "procédure stockée",
+      "base de données"
+    ],
+    "plsql": [
+      "SQL",
+      "Oracle",
+      "procédure stockée",
+      "base de données"
+    ],
+    "aws": [
+      "cloud",
+      "infrastructure",
+      "S3",
+      "EC2",
+      "déploiement"
+    ],
+    "azure": [
+      "cloud",
+      "infrastructure",
+      "Microsoft",
+      "déploiement"
+    ],
+    "gcp": [
+      "cloud",
+      "infrastructure",
+      "Google",
+      "déploiement"
+    ],
+    "cloud": [
+      "AWS",
+      "Azure",
+      "GCP",
+      "infrastructure",
+      "déploiement",
+      "serveur"
+    ],
+    "sap": [
+      "ERP",
+      "gestion",
+      "système d'information"
+    ],
+    "peoplesoft": [
+      "ERP",
+      "gestion",
+      "système d'information"
+    ],
+    "salesforce": [
+      "CRM",
+      "gestion client"
+    ],
+    "odoo": [
+      "ERP",
+      "gestion",
+      "Python",
+      "système d'information"
+    ],
+    "erp": [
+      "SAP",
+      "gestion",
+      "système d'information"
+    ],
+    "crm": [
+      "Salesforce",
+      "gestion client"
+    ],
+    "peoplecode": [
+      "ERP",
+      "développement",
+      "PeopleSoft"
+    ],
+    "application engine": [
+      "ERP",
+      "batch",
+      "PeopleSoft",
+      "traitement"
+    ],
+    "integration broker": [
+      "ERP",
+      "intégration",
+      "API",
+      "échanges",
+      "PeopleSoft"
+    ],
+    "sqr": [
+      "ERP",
+      "reporting",
+      "PeopleSoft",
+      "SQL"
+    ],
+    "component interface": [
+      "ERP",
+      "intégration",
+      "PeopleSoft",
+      "composant"
+    ],
+    "iot": [
+      "embarqué",
+      "capteurs",
+      "acquisition",
+      "temps réel",
+      "industriel"
+    ],
+    "embarque": [
+      "IoT",
+      "capteurs",
+      "acquisition",
+      "temps réel",
+      "Arduino"
+    ],
+    "arduino": [
+      "embarqué",
+      "IoT",
+      "capteurs",
+      "C++",
+      "temps réel"
+    ],
+    "raspberry": [
+      "embarqué",
+      "Linux",
+      "IoT",
+      "Python"
+    ],
+    "mqtt": [
+      "IoT",
+      "protocole",
+      "embarqué",
+      "messagerie",
+      "capteurs"
+    ],
+    "machine learning": [
+      "IA",
+      "modèle",
+      "données",
+      "Python",
+      "scikit",
+      "apprentissage"
+    ],
+    "deep learning": [
+      "réseau de neurones",
+      "IA",
+      "PyTorch",
+      "TensorFlow"
+    ],
+    "data engineering": [
+      "pipeline",
+      "ETL",
+      "données",
+      "Python",
+      "SQL",
+      "Spark"
+    ],
+    "mlops": [
+      "DevOps",
+      "Machine Learning",
+      "pipeline",
+      "déploiement",
+      "modèle"
+    ],
+    "spark": [
+      "big data",
+      "données",
+      "Python",
+      "Java",
+      "traitement distribué"
+    ],
+    "airflow": [
+      "pipeline",
+      "orchestration",
+      "Python",
+      "ETL",
+      "données"
+    ],
+    "perl": [
+      "script",
+      "automatisation",
+      "Linux",
+      "traitement texte"
+    ],
+    "php": [
+      "web",
+      "backend",
+      "API",
+      "serveur"
+    ],
+    "c#": [
+      ".NET",
+      "Microsoft",
+      "backend",
+      "API"
+    ],
+    ".net": [
+      "C#",
+      "Microsoft",
+      "backend",
+      "API"
+    ],
+    "golang": [
+      "Go",
+      "backend",
+      "microservices",
+      "API"
+    ],
+    "bash": [
+      "Linux",
+      "shell",
+      "script",
+      "automatisation"
+    ],
+    "shell": [
+      "Linux",
+      "Bash",
+      "script",
+      "automatisation"
+    ],
+    "powershell": [
+      "Windows",
+      "script",
+      "automatisation",
+      "administration"
+    ],
+    "prometheus": [
+      "monitoring",
+      "métriques",
+      "observabilité",
+      "Grafana"
+    ],
+    "grafana": [
+      "monitoring",
+      "métriques",
+      "observabilité",
+      "visualisation"
+    ],
+    "elk": [
+      "logs",
+      "Elasticsearch",
+      "monitoring",
+      "analyse"
+    ],
+    "datadog": [
+      "monitoring",
+      "observabilité",
+      "APM",
+      "métriques"
+    ],
+    "selenium": [
+      "tests",
+      "automatisation",
+      "frontend",
+      "qualité",
+      "navigateur"
+    ],
+    "cypress": [
+      "tests",
+      "frontend",
+      "JavaScript",
+      "qualité"
+    ],
+    "junit": [
+      "tests",
+      "Java",
+      "qualité",
+      "TDD"
+    ],
+    "sonarqube": [
+      "qualité",
+      "code",
+      "analyse statique",
+      "CI/CD"
+    ],
+    "microservices": [
+      "API",
+      "REST",
+      "Docker",
+      "Kubernetes",
+      "architecture"
+    ],
+    "soap": [
+      "XML",
+      "web service",
+      "intégration",
+      "API"
+    ],
+    "graphql": [
+      "API",
+      "JavaScript",
+      "React",
+      "backend"
+    ],
+    "kafka": [
+      "messagerie",
+      "streaming",
+      "pipeline",
+      "données",
+      "microservices"
+    ],
+    "rabbitmq": [
+      "messagerie",
+      "file",
+      "microservices",
+      "asynchrone"
+    ],
+    "support applicatif": [
+      "analyse d'incidents",
+      "diagnostic",
+      "résolution",
+      "support"
+    ],
+    "support technique": [
+      "analyse d'incidents",
+      "diagnostic",
+      "résolution",
+      "support"
+    ],
+    "analyse incidents": [
+      "support",
+      "diagnostic",
+      "logs",
+      "résolution"
+    ],
+    "production informatique": [
+      "support",
+      "exploitation",
+      "monitoring",
+      "infrastructure"
+    ],
+    "jira": [
+      "gestion de projet",
+      "Agile",
+      "Scrum",
+      "tickets"
+    ],
+    "confluence": [
+      "documentation",
+      "wiki",
+      "collaboration",
+      "Agile"
+    ],
+    "scrum": [
+      "Agile",
+      "sprint",
+      "gestion de projet",
+      "ceremonies"
+    ]
+  }
+}
