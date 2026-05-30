@@ -1,14 +1,17 @@
 {
+  "name": "auto-cv-gen-frontend",
+  "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vite": "^5.4.11",
+    "@vitejs/plugin-react": "^4.3.4"
+  }
 }
