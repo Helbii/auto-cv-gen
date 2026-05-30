@@ -1,0 +1,588 @@
+{
+  "schema_version": "1.0",
+  "nodes": {
+    "sap": {
+      "type": "tool",
+      "aliases": ["sap erp", "sap basis", "administration sap"],
+      "ats_terms": ["sap", "erp", "sap administration"],
+      "related": {
+        "erp": {"weight": 0.8, "relation": "close"},
+        "administration applicative": {"weight": 0.7, "relation": "transferable"},
+        "support applicatif": {"weight": 0.6, "relation": "transferable"},
+        "exploitation si": {"weight": 0.6, "relation": "transferable"},
+        "monitoring": {"weight": 0.5, "relation": "transferable"},
+        "documentation technique": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "erp": {
+      "type": "domain",
+      "aliases": ["enterprise resource planning", "progiciel de gestion integre"],
+      "ats_terms": ["erp", "sap", "peoplesoft"],
+      "related": {
+        "sap": {"weight": 0.8, "relation": "close"},
+        "peoplesoft": {"weight": 0.8, "relation": "close"},
+        "support applicatif": {"weight": 0.6, "relation": "transferable"},
+        "sql": {"weight": 0.6, "relation": "transferable"},
+        "integration applicative": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "peoplesoft": {
+      "type": "tool",
+      "aliases": ["oracle peoplesoft"],
+      "ats_terms": ["peoplesoft", "peoplecode", "application engine"],
+      "related": {
+        "erp": {"weight": 0.8, "relation": "close"},
+        "sql": {"weight": 0.6, "relation": "transferable"},
+        "support applicatif": {"weight": 0.6, "relation": "transferable"},
+        "integration applicative": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "production informatique": {
+      "type": "domain",
+      "aliases": ["ingenierie de production", "production it", "run"],
+      "ats_terms": ["production informatique", "run", "it production"],
+      "related": {
+        "exploitation si": {"weight": 0.8, "relation": "close"},
+        "support applicatif": {"weight": 0.7, "relation": "transferable"},
+        "monitoring": {"weight": 0.7, "relation": "transferable"},
+        "linux": {"weight": 0.6, "relation": "transferable"},
+        "incident management": {"weight": 0.6, "relation": "transferable"},
+        "devops": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "exploitation si": {
+      "type": "domain",
+      "aliases": ["exploitation systeme d'information", "operations it", "run si"],
+      "ats_terms": ["exploitation", "operations", "supervision"],
+      "related": {
+        "production informatique": {"weight": 0.8, "relation": "close"},
+        "support applicatif": {"weight": 0.8, "relation": "close"},
+        "monitoring": {"weight": 0.8, "relation": "close"},
+        "maintenance si": {"weight": 0.7, "relation": "transferable"},
+        "logs": {"weight": 0.6, "relation": "transferable"},
+        "incident management": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "support applicatif": {
+      "type": "mission",
+      "aliases": ["application support", "support technique applicatif"],
+      "ats_terms": ["support applicatif", "application support", "incident"],
+      "related": {
+        "incident management": {"weight": 0.8, "relation": "close"},
+        "troubleshooting": {"weight": 0.8, "relation": "close"},
+        "exploitation si": {"weight": 0.8, "relation": "close"},
+        "documentation technique": {"weight": 0.6, "relation": "transferable"},
+        "monitoring": {"weight": 0.6, "relation": "transferable"},
+        "administration applicative": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "administration applicative": {
+      "type": "mission",
+      "aliases": ["admin applicatif", "application administration"],
+      "ats_terms": ["application administration", "admin applicatif"],
+      "related": {
+        "support applicatif": {"weight": 0.8, "relation": "close"},
+        "exploitation si": {"weight": 0.8, "relation": "close"},
+        "sap": {"weight": 0.6, "relation": "transferable"},
+        "monitoring": {"weight": 0.6, "relation": "transferable"},
+        "incident management": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "maintenance si": {
+      "type": "mission",
+      "aliases": ["maintenance du si", "gestion des maintenances", "maintenance applicative"],
+      "ats_terms": ["maintenance", "mco", "maintien en condition operationnelle"],
+      "related": {
+        "support applicatif": {"weight": 0.8, "relation": "close"},
+        "exploitation si": {"weight": 0.8, "relation": "close"},
+        "incident management": {"weight": 0.6, "relation": "transferable"},
+        "documentation technique": {"weight": 0.6, "relation": "transferable"},
+        "deploiement": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "devops": {
+      "type": "domain",
+      "aliases": ["dev ops", "culture devops"],
+      "ats_terms": ["devops", "automation", "deployment"],
+      "related": {
+        "ci/cd": {"weight": 0.8, "relation": "close"},
+        "docker": {"weight": 0.8, "relation": "close"},
+        "git": {"weight": 0.7, "relation": "transferable"},
+        "linux": {"weight": 0.6, "relation": "transferable"},
+        "automatisation": {"weight": 0.7, "relation": "transferable"},
+        "monitoring": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "ci/cd": {
+      "type": "methodology",
+      "aliases": ["continuous integration", "continuous delivery", "integration continue", "deploiement continu"],
+      "ats_terms": ["ci/cd", "pipeline", "continuous delivery"],
+      "related": {
+        "github actions": {"weight": 0.8, "relation": "close"},
+        "jenkins": {"weight": 0.8, "relation": "close"},
+        "pipelines": {"weight": 0.8, "relation": "close"},
+        "automatisation": {"weight": 0.6, "relation": "transferable"},
+        "git": {"weight": 0.6, "relation": "transferable"},
+        "devops": {"weight": 0.8, "relation": "close"}
+      }
+    },
+    "jenkins": {
+      "type": "tool",
+      "aliases": ["jenkins ci"],
+      "ats_terms": ["jenkins", "ci/cd", "pipeline"],
+      "related": {
+        "ci/cd": {"weight": 0.8, "relation": "close"},
+        "github actions": {"weight": 0.6, "relation": "transferable"},
+        "pipelines": {"weight": 0.8, "relation": "close"},
+        "git": {"weight": 0.5, "relation": "transferable"},
+        "docker": {"weight": 0.5, "relation": "transferable"},
+        "automatisation": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "github actions": {
+      "type": "tool",
+      "aliases": ["actions github", "github workflows"],
+      "ats_terms": ["github actions", "workflow", "ci/cd"],
+      "related": {
+        "ci/cd": {"weight": 0.8, "relation": "close"},
+        "github": {"weight": 0.8, "relation": "close"},
+        "jenkins": {"weight": 0.6, "relation": "transferable"},
+        "pipelines": {"weight": 0.8, "relation": "close"},
+        "automatisation": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "ansible": {
+      "type": "tool",
+      "aliases": ["ansible automation"],
+      "ats_terms": ["ansible", "configuration management", "iac"],
+      "related": {
+        "automatisation": {"weight": 0.8, "relation": "close"},
+        "devops": {"weight": 0.7, "relation": "transferable"},
+        "linux": {"weight": 0.6, "relation": "transferable"},
+        "docker": {"weight": 0.5, "relation": "transferable"},
+        "infrastructure as code": {"weight": 0.8, "relation": "close"}
+      }
+    },
+    "nexus": {
+      "type": "tool",
+      "aliases": ["sonatype nexus", "nexus repository"],
+      "ats_terms": ["nexus", "artifact repository"],
+      "related": {
+        "ci/cd": {"weight": 0.6, "relation": "transferable"},
+        "devops": {"weight": 0.6, "relation": "transferable"},
+        "deploiement": {"weight": 0.6, "relation": "transferable"},
+        "jenkins": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "xldeploy": {
+      "type": "tool",
+      "aliases": ["xl deploy", "digital.ai deploy"],
+      "ats_terms": ["xldeploy", "deployment automation"],
+      "related": {
+        "deploiement": {"weight": 0.8, "relation": "close"},
+        "ci/cd": {"weight": 0.6, "relation": "transferable"},
+        "automatisation": {"weight": 0.6, "relation": "transferable"},
+        "devops": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "automatisation": {
+      "type": "domain",
+      "aliases": ["automation", "automatiser"],
+      "ats_terms": ["automation", "scripting", "process automation"],
+      "related": {
+        "scripting": {"weight": 0.8, "relation": "close"},
+        "python": {"weight": 0.7, "relation": "transferable"},
+        "bash": {"weight": 0.6, "relation": "transferable"},
+        "ansible": {"weight": 0.8, "relation": "close"},
+        "ci/cd": {"weight": 0.6, "relation": "transferable"},
+        "devops": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "scripting": {
+      "type": "domain",
+      "aliases": ["script", "scripts"],
+      "ats_terms": ["scripting", "shell script", "automation"],
+      "related": {
+        "bash": {"weight": 0.8, "relation": "close"},
+        "shell": {"weight": 0.8, "relation": "close"},
+        "python": {"weight": 0.7, "relation": "transferable"},
+        "automatisation": {"weight": 0.8, "relation": "close"},
+        "linux": {"weight": 0.6, "relation": "transferable"},
+        "perl": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "shell": {
+      "type": "language",
+      "aliases": ["shell scripting", "sh", "command line"],
+      "ats_terms": ["shell", "unix shell", "scripting"],
+      "related": {
+        "bash": {"weight": 1.0, "relation": "equivalent"},
+        "linux": {"weight": 0.8, "relation": "close"},
+        "scripting": {"weight": 0.8, "relation": "close"},
+        "automatisation": {"weight": 0.6, "relation": "transferable"},
+        "ssh": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "bash": {
+      "type": "language",
+      "aliases": ["bash scripting"],
+      "ats_terms": ["bash", "shell", "linux scripting"],
+      "related": {
+        "shell": {"weight": 1.0, "relation": "equivalent"},
+        "linux": {"weight": 0.8, "relation": "close"},
+        "scripting": {"weight": 0.8, "relation": "close"},
+        "automatisation": {"weight": 0.6, "relation": "transferable"},
+        "ssh": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "python": {
+      "type": "language",
+      "aliases": ["python 3", "py"],
+      "ats_terms": ["python", "python3", "backend python"],
+      "related": {
+        "backend python": {"weight": 0.8, "relation": "close"},
+        "fastapi": {"weight": 0.7, "relation": "transferable"},
+        "data engineering": {"weight": 0.6, "relation": "transferable"},
+        "scripting": {"weight": 0.7, "relation": "transferable"},
+        "automatisation": {"weight": 0.7, "relation": "transferable"}
+      }
+    },
+    "javascript": {
+      "type": "language",
+      "aliases": ["js", "ecmascript"],
+      "ats_terms": ["javascript", "js", "frontend"],
+      "related": {
+        "frontend": {"weight": 0.7, "relation": "transferable"},
+        "react": {"weight": 0.7, "relation": "transferable"},
+        "typescript": {"weight": 0.7, "relation": "transferable"},
+        "node.js": {"weight": 0.6, "relation": "transferable"},
+        "interface web": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "frontend": {
+      "type": "domain",
+      "aliases": ["front-end", "front end", "developpement frontend", "developpement front-end"],
+      "ats_terms": ["frontend", "front-end", "ui", "web interface"],
+      "related": {
+        "react": {"weight": 0.8, "relation": "close"},
+        "javascript": {"weight": 0.7, "relation": "transferable"},
+        "typescript": {"weight": 0.7, "relation": "transferable"},
+        "interface web": {"weight": 0.8, "relation": "close"},
+        "ux": {"weight": 0.6, "relation": "transferable"},
+        "accessibilite": {"weight": 0.6, "relation": "transferable"},
+        "performance web": {"weight": 0.6, "relation": "transferable"},
+        "tests unitaires": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "react": {
+      "type": "framework",
+      "aliases": ["react.js", "reactjs"],
+      "ats_terms": ["react", "react.js", "frontend"],
+      "related": {
+        "frontend": {"weight": 0.8, "relation": "close"},
+        "javascript": {"weight": 0.7, "relation": "transferable"},
+        "typescript": {"weight": 0.7, "relation": "transferable"},
+        "interface web": {"weight": 0.8, "relation": "close"},
+        "design system": {"weight": 0.6, "relation": "transferable"},
+        "ux": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "interface web": {
+      "type": "domain",
+      "aliases": ["interfaces web", "ui web", "application web", "application metier"],
+      "ats_terms": ["web interface", "ui", "application"],
+      "related": {
+        "frontend": {"weight": 0.8, "relation": "close"},
+        "react": {"weight": 0.8, "relation": "close"},
+        "ux": {"weight": 0.7, "relation": "transferable"},
+        "design system": {"weight": 0.7, "relation": "transferable"},
+        "accessibilite": {"weight": 0.6, "relation": "transferable"},
+        "performance web": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "agile": {
+      "type": "methodology",
+      "aliases": ["methodes agiles", "ceremonies agile", "grooming"],
+      "ats_terms": ["agile", "scrum", "grooming", "user stories"],
+      "related": {
+        "scrum": {"weight": 0.8, "relation": "close"},
+        "user stories": {"weight": 0.8, "relation": "close"},
+        "gestion de projet": {"weight": 0.6, "relation": "transferable"},
+        "coordination": {"weight": 0.6, "relation": "transferable"},
+        "documentation technique": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "scrum": {
+      "type": "methodology",
+      "aliases": ["sprint", "ceremonies scrum"],
+      "ats_terms": ["scrum", "sprint", "agile"],
+      "related": {
+        "agile": {"weight": 0.8, "relation": "close"},
+        "user stories": {"weight": 0.7, "relation": "transferable"},
+        "gestion de projet": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "user stories": {
+      "type": "mission",
+      "aliases": ["user story", "stories"],
+      "ats_terms": ["user stories", "requirements", "agile"],
+      "related": {
+        "agile": {"weight": 0.8, "relation": "close"},
+        "analyse des besoins": {"weight": 0.7, "relation": "transferable"},
+        "cahier des charges": {"weight": 0.6, "relation": "transferable"},
+        "documentation technique": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "ux": {
+      "type": "domain",
+      "aliases": ["experience utilisateur", "user experience"],
+      "ats_terms": ["ux", "user experience", "experience utilisateur"],
+      "related": {
+        "frontend": {"weight": 0.6, "relation": "transferable"},
+        "interface web": {"weight": 0.7, "relation": "transferable"},
+        "design system": {"weight": 0.6, "relation": "transferable"},
+        "accessibilite": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "design system": {
+      "type": "domain",
+      "aliases": ["design systems", "systeme de design"],
+      "ats_terms": ["design system", "ui standards", "components"],
+      "related": {
+        "frontend": {"weight": 0.6, "relation": "transferable"},
+        "react": {"weight": 0.6, "relation": "transferable"},
+        "interface web": {"weight": 0.7, "relation": "transferable"},
+        "ux": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "accessibilite": {
+      "type": "domain",
+      "aliases": ["accessibilite web", "accessibility", "a11y"],
+      "ats_terms": ["accessibility", "a11y", "accessibilite"],
+      "related": {
+        "frontend": {"weight": 0.6, "relation": "transferable"},
+        "interface web": {"weight": 0.6, "relation": "transferable"},
+        "ux": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "performance web": {
+      "type": "domain",
+      "aliases": ["performance frontend", "web performance"],
+      "ats_terms": ["performance", "web performance", "optimization"],
+      "related": {
+        "frontend": {"weight": 0.6, "relation": "transferable"},
+        "react": {"weight": 0.6, "relation": "transferable"},
+        "tests unitaires": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "tests unitaires": {
+      "type": "methodology",
+      "aliases": ["unit tests", "test unitaire"],
+      "ats_terms": ["unit tests", "tests unitaires", "testing"],
+      "related": {
+        "tests": {"weight": 0.8, "relation": "close"},
+        "qualite logicielle": {"weight": 0.7, "relation": "transferable"},
+        "frontend": {"weight": 0.6, "relation": "transferable"},
+        "javascript": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "rgpd": {
+      "type": "domain",
+      "aliases": ["gdpr", "protection des donnees"],
+      "ats_terms": ["rgpd", "gdpr", "data protection"],
+      "related": {
+        "documentation technique": {"weight": 0.5, "relation": "transferable"},
+        "qualite des donnees": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "eco-conception": {
+      "type": "domain",
+      "aliases": ["ecoconception", "eco conception"],
+      "ats_terms": ["eco-conception", "green it", "sobriete numerique"],
+      "related": {
+        "frontend": {"weight": 0.5, "relation": "transferable"},
+        "performance web": {"weight": 0.6, "relation": "transferable"},
+        "qualite logicielle": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "php": {
+      "type": "language",
+      "aliases": [],
+      "ats_terms": ["php", "backend"],
+      "related": {
+        "backend": {"weight": 0.5, "relation": "transferable"},
+        "api rest": {"weight": 0.5, "relation": "transferable"},
+        "bases de donnees": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "perl": {
+      "type": "language",
+      "aliases": ["perl scripting"],
+      "ats_terms": ["perl", "scripting"],
+      "related": {
+        "scripting": {"weight": 0.5, "relation": "transferable"},
+        "shell": {"weight": 0.5, "relation": "transferable"},
+        "linux": {"weight": 0.5, "relation": "transferable"},
+        "automatisation": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "linux": {
+      "type": "tool",
+      "aliases": ["gnu/linux", "unix-like", "systemes linux"],
+      "ats_terms": ["linux", "unix", "shell"],
+      "related": {
+        "shell": {"weight": 0.8, "relation": "close"},
+        "bash": {"weight": 0.8, "relation": "close"},
+        "ssh": {"weight": 0.6, "relation": "transferable"},
+        "docker": {"weight": 0.6, "relation": "transferable"},
+        "exploitation si": {"weight": 0.6, "relation": "transferable"},
+        "devops": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "docker": {
+      "type": "tool",
+      "aliases": ["container", "conteneur", "conteneurisation"],
+      "ats_terms": ["docker", "containers", "containerization"],
+      "related": {
+        "devops": {"weight": 0.8, "relation": "close"},
+        "linux": {"weight": 0.6, "relation": "transferable"},
+        "ci/cd": {"weight": 0.6, "relation": "transferable"},
+        "microservices": {"weight": 0.5, "relation": "transferable"}
+      }
+    },
+    "git": {
+      "type": "tool",
+      "aliases": ["git scm", "version control"],
+      "ats_terms": ["git", "version control", "source control"],
+      "related": {
+        "github": {"weight": 0.8, "relation": "close"},
+        "github actions": {"weight": 0.6, "relation": "transferable"},
+        "ci/cd": {"weight": 0.6, "relation": "transferable"},
+        "developpement logiciel": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "github": {
+      "type": "tool",
+      "aliases": ["github.com"],
+      "ats_terms": ["github", "repository", "pull request"],
+      "related": {
+        "git": {"weight": 0.8, "relation": "close"},
+        "github actions": {"weight": 0.8, "relation": "close"},
+        "ci/cd": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "ssh": {
+      "type": "tool",
+      "aliases": ["secure shell"],
+      "ats_terms": ["ssh", "linux", "remote access"],
+      "related": {
+        "linux": {"weight": 0.6, "relation": "transferable"},
+        "reseaux": {"weight": 0.6, "relation": "transferable"},
+        "exploitation si": {"weight": 0.6, "relation": "transferable"},
+        "support applicatif": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "monitoring": {
+      "type": "domain",
+      "aliases": ["supervision", "observability", "surveillance"],
+      "ats_terms": ["monitoring", "supervision", "observability", "alerting"],
+      "related": {
+        "logs": {"weight": 0.8, "relation": "close"},
+        "exploitation si": {"weight": 0.8, "relation": "close"},
+        "support applicatif": {"weight": 0.6, "relation": "transferable"},
+        "production informatique": {"weight": 0.6, "relation": "transferable"},
+        "incident management": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "logs": {
+      "type": "domain",
+      "aliases": ["logging", "journalisation", "logging structure"],
+      "ats_terms": ["logs", "logging", "observability"],
+      "related": {
+        "monitoring": {"weight": 0.8, "relation": "close"},
+        "incident management": {"weight": 0.6, "relation": "transferable"},
+        "support applicatif": {"weight": 0.6, "relation": "transferable"},
+        "exploitation si": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "incident management": {
+      "type": "mission",
+      "aliases": ["gestion incidents", "incident response", "analyse d'incidents"],
+      "ats_terms": ["incident management", "incident resolution", "support"],
+      "related": {
+        "support applicatif": {"weight": 0.8, "relation": "close"},
+        "troubleshooting": {"weight": 0.8, "relation": "close"},
+        "monitoring": {"weight": 0.6, "relation": "transferable"},
+        "logs": {"weight": 0.6, "relation": "transferable"},
+        "documentation technique": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "troubleshooting": {
+      "type": "mission",
+      "aliases": ["diagnostic", "debug", "resolution probleme"],
+      "ats_terms": ["troubleshooting", "debugging", "diagnostic"],
+      "related": {
+        "incident management": {"weight": 0.8, "relation": "close"},
+        "support applicatif": {"weight": 0.8, "relation": "close"},
+        "logs": {"weight": 0.6, "relation": "transferable"},
+        "monitoring": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "documentation technique": {
+      "type": "mission",
+      "aliases": ["technical documentation", "docs", "documentation"],
+      "ats_terms": ["technical documentation", "documentation", "knowledge base"],
+      "related": {
+        "support applicatif": {"weight": 0.6, "relation": "transferable"},
+        "incident management": {"weight": 0.6, "relation": "transferable"},
+        "gestion de projet": {"weight": 0.6, "relation": "transferable"},
+        "communication": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "anglais": {
+      "type": "soft_skill",
+      "aliases": ["anglais professionnel", "anglais courant", "english", "business english"],
+      "ats_terms": ["english", "professional english", "international"],
+      "related": {
+        "communication": {"weight": 0.8, "relation": "close"},
+        "support international": {"weight": 0.8, "relation": "close"},
+        "documentation technique": {"weight": 0.6, "relation": "transferable"},
+        "support applicatif": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "management": {
+      "type": "soft_skill",
+      "aliases": ["management d'equipe", "leadership"],
+      "ats_terms": ["management", "leadership", "team management"],
+      "related": {
+        "gestion d'equipe": {"weight": 0.8, "relation": "close"},
+        "coordination": {"weight": 0.8, "relation": "close"},
+        "accompagnement": {"weight": 0.6, "relation": "transferable"},
+        "gestion de projet": {"weight": 0.6, "relation": "transferable"},
+        "communication": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "gestion de projet": {
+      "type": "methodology",
+      "aliases": ["project management", "pilotage projet"],
+      "ats_terms": ["project management", "planning", "coordination"],
+      "related": {
+        "coordination": {"weight": 0.8, "relation": "close"},
+        "management": {"weight": 0.6, "relation": "transferable"},
+        "cahier des charges": {"weight": 0.6, "relation": "transferable"},
+        "documentation technique": {"weight": 0.6, "relation": "transferable"}
+      }
+    },
+    "coordination": {
+      "type": "soft_skill",
+      "aliases": ["coordination technique", "coordination projet"],
+      "ats_terms": ["coordination", "team coordination"],
+      "related": {
+        "gestion de projet": {"weight": 0.8, "relation": "close"},
+        "management": {"weight": 0.8, "relation": "close"},
+        "communication": {"weight": 0.6, "relation": "transferable"},
+        "travail en equipe": {"weight": 0.8, "relation": "close"}
+      }
+    }
+  }
+}

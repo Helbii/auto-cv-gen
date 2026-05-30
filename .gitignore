@@ -5,7 +5,8 @@ data/cv_master.json
 data/photo.jpg
 data/photo.jpeg
 data/photo.png
-data/semantic_graph.json
+# data/semantic_graph.json est volontairement INCLUS dans le repo :
+# c'est un graphe générique de compétences tech, pas de données personnelles.
 
 # ── Fichiers générés (contenu personnel) ────────────
 outputs/
