@@ -46,14 +46,37 @@ def contains_term(text: str, term: str) -> bool:
     return normalized_term in normalized_text
 
 
-def nodes_mentioned_in_text(text: str) -> List[str]:
+def _contains_normalized(normalized_text: str, normalized_term: str) -> bool:
+    """Version optimisée de contains_term pour texte et terme déjà normalisés."""
+    if not normalized_term:
+        return False
+    if len(normalized_term) <= 4:
+        return re.search(r"\b" + re.escape(normalized_term) + r"\b", normalized_text) is not None
+    return normalized_term in normalized_text
+
+
+@lru_cache(maxsize=1)
+def _build_term_index() -> Dict[str, List[str]]:
+    """Index inversé {terme_normalisé → [noms_de_noeuds]} — construit une seule fois."""
     graph = load_semantic_graph()
     nodes = graph.get("nodes", {})
-    mentioned = []
+    index: Dict[str, List[str]] = {}
     for name, node in nodes.items():
-        if any(contains_term(text, term) for term in node_terms(name, node)):
-            mentioned.append(name)
-    return mentioned
+        for term in node_terms(name, node):
+            norm = normalize_text(term)
+            if norm:
+                index.setdefault(norm, []).append(name)
+    return index
+
+
+def nodes_mentioned_in_text(text: str) -> List[str]:
+    index = _build_term_index()
+    normalized_text = normalize_text(text)
+    mentioned: set = set()
+    for norm_term, node_names in index.items():
+        if _contains_normalized(normalized_text, norm_term):
+            mentioned.update(node_names)
+    return list(mentioned)
 
 
 def related_terms_for_node(name: str, min_weight: float = 0.4) -> List[str]:

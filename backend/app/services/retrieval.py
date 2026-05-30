@@ -49,15 +49,26 @@ def build_fts_query(offer_counts: Dict[str, int], total_tokens: int, limit_token
     return " OR ".join(quote_fts_token(t) for t in top_tokens)
 
 
+_idf_cache: dict = {"key": None, "idf": {}}
+
+
 def _compute_idf(all_evidence: List[Dict[str, Any]]) -> Dict[str, float]:
-    """IDF lissé : log((N+1) / (df+1)) pour chaque token du corpus."""
+    """IDF lissé : log((N+1) / (df+1)) — résultat mis en cache par empreinte du corpus."""
+    cache_key = tuple(ev["id"] for ev in all_evidence)
+    if cache_key == _idf_cache["key"]:
+        return _idf_cache["idf"]
+
     N = len(all_evidence)
     doc_freq: Dict[str, int] = {}
     for ev in all_evidence:
         full_text = f"{ev['category']} {ev['source']} {ev['field']} {ev['text']}"
         for tok in simple_tokens(full_text):
             doc_freq[tok] = doc_freq.get(tok, 0) + 1
-    return {tok: math.log((N + 1) / (df + 1)) for tok, df in doc_freq.items()}
+    idf = {tok: math.log((N + 1) / (df + 1)) for tok, df in doc_freq.items()}
+
+    _idf_cache["key"] = cache_key
+    _idf_cache["idf"] = idf
+    return idf
 
 
 def expand_offer_for_retrieval(job_offer: str) -> str:
