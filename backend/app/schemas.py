@@ -16,6 +16,7 @@ class JobRequest(BaseModel):
     model: Optional[str] = None              # rétrocompat : mappé sur generation_model si fourni seul
     matching_model: Optional[str] = None
     generation_model: Optional[str] = None
+    custom_title: Optional[str] = Field(default=None, max_length=120)
     pdf_design: Optional[Dict[str, Any]] = None
     offer_url: Optional[str] = Field(default=None, max_length=500)
 

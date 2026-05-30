@@ -196,6 +196,8 @@ def generate_cv(payload: JobRequest):
         audit_md = generate_audit_markdown(matching, generated, audit, id_to_evidence)
         email_md = generate_email_markdown(matching, generated, audit)
         rendercv_data = build_rendercv_yaml_data(matching, generated, audit, id_to_evidence, cv_master=cv_master)
+        if payload.custom_title:
+            rendercv_data.setdefault("cv", {})["headline"] = payload.custom_title
         if payload.pdf_design:
             rendercv_data["design"] = build_design(payload.pdf_design)
         rendercv_files = render_rendercv_data(settings.output_dir, rendercv_data)
@@ -404,6 +406,8 @@ def generate_cv_stream(payload: JobRequest):
 
             yield _sse({"step": "rendering", "message": "Génération PDF & DOCX..."})
             rendercv_data = build_rendercv_yaml_data(matching, generated, audit, id_to_evidence, cv_master=cv_master)
+            if payload.custom_title:
+                rendercv_data.setdefault("cv", {})["headline"] = payload.custom_title
             if payload.pdf_design:
                 rendercv_data["design"] = build_design(payload.pdf_design)
             rendercv_files = render_rendercv_data(settings.output_dir, rendercv_data)
@@ -428,7 +432,7 @@ def generate_cv_stream(payload: JobRequest):
             output_files.update(rendercv_files)
 
             # Sauvegarde dans l'historique
-            title = matching.get("safe_recommended_title") or matching.get("recommended_title", "CV cible")
+            title = payload.custom_title or matching.get("safe_recommended_title") or matching.get("recommended_title", "CV cible")
             history_dir = settings.output_dir / "history"
             history_folder = make_history_folder(history_dir, title)
             editable_cv = rendercv_data.get("cv", {})

@@ -302,7 +302,7 @@ def _condensed_matching(matching: Dict[str, Any]) -> str:
     if absent:
         lines.append(f"ABSENTES — NE PAS REVENDIQUER : {', '.join(absent)}")
     if training:
-        lines.append("Contexte offre : junior/formant → valoriser montée en compétence rapide")
+        lines.append("Contexte offre : junior/formant → s'appuyer exclusivement sur les compétences CONFIRMÉES concrètes, sans revendiquer d'acquis sur les ABSENTES")
     if ctx_terms:
         lines.append(f"Termes contextuels sûrs à intégrer : {', '.join(ctx_terms[:6])}")
     return "\n".join(lines)
@@ -371,12 +371,20 @@ Regles :
 - Ordonne les bullets du plus au moins pertinent pour l'offre
 {transferable_block}
 FORMAT OBLIGATOIRE DU RESUME PROFESSIONNEL :
-3 phrases maximum :
-1. Positionnement + domaine principal + preuve cle (ex: "Developpeur Python avec X ans d'experience en...")
-2. Top 2-3 competences CONFIRMEES les plus pertinentes pour cette offre specifique
-3. Si offre junior/formante : capacite de montee en competence rapide sur [technologie absente]
-   Sinon : valeur ajoutee differenciante ou secteur d'expertise
-Maximum 600 caracteres. Pas de formulations generiques ("passionne par", "rigoureux", "dynamique").
+5 phrases minimum, chacune avec un role distinct. Utilise UNIQUEMENT les preuves de ALLOWED_EVIDENCE.
+
+Phrase 1 — Ancrage : [Titre professionnel] avec [N] ans d'expérience en [domaine principal prouvé].
+Phrase 2 — Preuves ciblées : maîtrise de [compétences CONFIRMED uniquement], appliquées à [contexte concret issu des preuves].
+  INTERDIT de citer une compétence TRANSFERABLE ou ABSENTE comme si elle était acquise.
+Phrase 3 — Réalisation concrète : une réalisation mesurable ou impactante issue des preuves (chiffre, échelle, résultat).
+  Si aucun chiffre disponible : décrire le contexte technique précis (taille, environnement, criticité).
+Phrase 4 — Valeur pour CE poste : lien explicite entre l'expérience réelle du candidat et les besoins spécifiques de l'offre.
+  INTERDIT : nommer une techno absente, écrire "capacité à s'adapter" ou "montée en compétence".
+  CORRECT : relier une compétence prouvée au contexte de l'offre (secteur, type de système, méthode de travail).
+Phrase 5 — Positionnement : type d'environnement, de projet ou de méthode de travail où le candidat est à l'aise, cohérent avec l'offre cible (ex : travail en équipe agile, environnements Linux, projets data, systèmes embarqués…).
+  INTERDIT : "montée en compétence", "capacité à évoluer", "potentiel d'adaptation" ou toute formule générique de ce type.
+
+Maximum 600 caractères. Pas de formulations génériques ("passionné par", "rigoureux", "dynamique").
 
 FORMAT OBLIGATOIRE DE LA LETTRE DE MOTIVATION (application_email) :
 Une vraie lettre structurée en 3 paragraphes, champs séparés :
@@ -392,7 +400,7 @@ Règles lettre :
 CONTRAINTES DE TAILLE :
 - 6 a 9 competences a afficher
 - 5 a 8 bullets d'experience
-- Resume < 600 caracteres
+- Resume : 5 phrases, maximum 600 caracteres
 - Chaque paragraphe de la lettre : 2 a 4 phrases maximum
 
 REGLES ABSOLUES :

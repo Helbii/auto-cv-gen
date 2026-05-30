@@ -32,6 +32,8 @@ frontend/.vite/
 .claude/
 .agents/
 skills-lock.json
+graphify-out/
+AUDIT_TECHNIQUE.md
 
 # ── OS ───────────────────────────────────────────────
 .DS_Store

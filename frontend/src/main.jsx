@@ -37,6 +37,7 @@ function StepDot({ status }) {
 }
 
 function App() {
+  const [customTitle, setCustomTitle] = useState("");
   const [jobOffer, setJobOffer]       = useState("");
   const [offerUrl, setOfferUrl]       = useState("");
   const [modelPreset, setModelPreset]  = useState("balanced");
@@ -149,7 +150,7 @@ function App() {
       const res = await fetch("/api/generate-cv/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify((() => { const p = MODEL_PRESETS.find(x => x.value === modelPreset); return { job_offer: jobOffer, matching_model: p?.matching, generation_model: p?.generation, top_k: Number(topK), offer_url: offerUrl.trim() || null, pdf_design: pdfDesign }; })()),
+        body: JSON.stringify((() => { const p = MODEL_PRESETS.find(x => x.value === modelPreset); return { job_offer: jobOffer, matching_model: p?.matching, generation_model: p?.generation, top_k: Number(topK), offer_url: offerUrl.trim() || null, pdf_design: pdfDesign, custom_title: customTitle.trim() || null }; })()),
       });
 
       if (!res.ok) {
@@ -195,7 +196,9 @@ function App() {
             case "complete":
               setStep("rendering", "done");
               setResult(ev.data);
-              setEditableCv(ev.data.editable_cv || null);
+              const ecv = ev.data.editable_cv || null;
+              if (ecv && customTitle.trim()) ecv.headline = customTitle.trim();
+              setEditableCv(ecv);
               setPdfDesign({ ...DEFAULT_PDF_DESIGN, ...(ev.data.pdf_design || {}) });
               setActiveHistoryId(null);
               setHiddenSections({});
@@ -480,6 +483,15 @@ function App() {
               <p className="offer-sub">Colle le texte d'une offre pour créer un CV optimisé ATS en quelques minutes.</p>
             </div>
             <div className="offer-inputs">
+              <div className="cv-title-bar">
+                <label className="cv-title-label">Emploi ciblé</label>
+                <input
+                  className="inp cv-title-input"
+                  placeholder="ex : Ingénieur Python – IA Générative"
+                  value={customTitle}
+                  onChange={e => setCustomTitle(e.target.value)}
+                />
+              </div>
               <textarea
                 className="inp textarea offer-ta"
                 placeholder="Colle ici l'offre complète…"
@@ -504,6 +516,7 @@ function App() {
           {/* ── Résultats ── */}
           {result && (
             <>
+
               {/* Score banner */}
               {audit && (
                 <div className="score-banner">
@@ -707,10 +720,6 @@ function App() {
                           </label>
                         ))}
                       </div>
-                      <label className="field">
-                        <span className="flabel">Titre</span>
-                        <input className="inp" value={editableCv.headline || ""} onChange={e => patchCv({ headline: e.target.value })} />
-                      </label>
                       {editableCv.sections?.["Résumé"] && (
                         <label className="field">
                           <span className="flabel">Résumé</span>

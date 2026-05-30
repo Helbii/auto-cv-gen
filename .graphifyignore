@@ -1,0 +1,26 @@
+# Dépendances
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python bytecode
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Données personnelles & générées
+data/
+outputs/
+storage/
+
+# Outils locaux
+.claude/
+.agents/
+skills-lock.json
+
+# Fichiers de config non-code
+.env
+.env.example
+.gitignore
+.gitattributes
+README.md

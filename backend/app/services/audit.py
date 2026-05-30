@@ -13,7 +13,11 @@ def contains_forbidden_claim(text: str, forbidden_claims: List[str]) -> List[str
     text_lower = normalize_text(text)
     for claim in forbidden_claims:
         normalized_claim = normalize_text(str(claim).strip())
-        if normalized_claim and normalized_claim in text_lower:
+        # Ignorer les claims trop courts — mots grammaticaux ("une", "les", "api"...)
+        # qui matcheraient n'importe quel texte naturel
+        if not normalized_claim or len(normalized_claim) <= 3:
+            continue
+        if normalized_claim in text_lower:
             found.append(claim)
     return found
 
@@ -34,7 +38,7 @@ def contains_unsupported_claim(text: str, forbidden_claims: List[str]) -> List[s
                 continue
             has_claim_word = any(word in normalized_sentence for word in claim_words)
             has_safe_word = any(word in normalized_sentence for word in safe_words)
-            if has_claim_word or not has_safe_word:
+            if has_claim_word and not has_safe_word:
                 found.append(claim)
                 break
     return found
@@ -104,14 +108,23 @@ def validate_generated_cv(
 def build_safe_summary(audit: Dict[str, Any], matching: Dict[str, Any] | None = None) -> str:
     matching = matching or {}
     skills = [item.get("skill", "") for item in audit.get("valid_skills", []) if item.get("skill")]
+    title = (
+        matching.get("safe_recommended_title", "")
+        or matching.get("recommended_title", "")
+        or "Développeur"
+    )
+    sector = matching.get("offer_sector", "")
+
     if skills:
-        return (
-            "Profil junior en développement logiciel et support applicatif, avec expériences en "
-            f"{', '.join(skills[:4])}. Positionnement prudent avec montée en compétence rapide sur l'environnement cible."
-        )
+        skills_str = ", ".join(skills[:4])
+        summary = f"{title} avec expériences documentées en {skills_str}."
+        if sector:
+            summary += f" Expérience applicable au contexte {sector}."
+        return summary
+
     return (
-        "Profil junior en développement logiciel avec expériences documentées en support, analyse et documentation. "
-        "Positionnement prudent avec montée en compétence rapide sur l'environnement cible."
+        f"{title} avec expériences documentées en développement logiciel, "
+        "support applicatif et analyse technique."
     )
 
 
