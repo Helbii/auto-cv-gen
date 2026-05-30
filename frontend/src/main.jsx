@@ -47,7 +47,7 @@ function App() {
   const [error, setError]             = useState("");
   const [result, setResult]           = useState(null);
   const [outputMode, setOutputMode]   = useState("cv");
-  const [pdfFilename, setPdfFilename] = useState("BEN_ROKIA_Bilel_CV");
+  const [pdfFilename, setPdfFilename] = useState("");
   const [editableCv, setEditableCv]   = useState(null);
   const [pdfDesign, setPdfDesign]     = useState(DEFAULT_PDF_DESIGN);
   const [pdfKey, setPdfKey]           = useState(Date.now());
@@ -416,10 +416,10 @@ function App() {
               onChange={e => { if (e.target.files[0]) uploadCv(e.target.files[0]); e.target.value = ""; }}
             />
             <div className="btn-stack">
-              <button className="btn btn-pri btn-full" onClick={() => fileInputRef.current.click()} disabled={loading}>
+              <button className="btn btn-pri btn-full" onClick={() => fileInputRef.current.click()} disabled={loading} aria-label="Charger un fichier CV au format JSON">
                 ↑ Charger CV JSON
               </button>
-              <button className="btn btn-ghost btn-sm btn-full" onClick={indexCv} disabled={loading}>
+              <button className="btn btn-ghost btn-sm btn-full" onClick={indexCv} disabled={loading} aria-label="Ré-indexer le CV chargé">
                 Re-indexer
               </button>
             </div>
@@ -623,13 +623,14 @@ function App() {
                     </div>
                     <div className="output-actions">
                       <input className="inp inp-sm pdf-name" value={pdfFilename} onChange={e => setPdfFilename(e.target.value)} placeholder="nom_pdf" />
-                      <button className="btn btn-ghost btn-sm" onClick={copyMarkdown}>⧉</button>
-                      <button className="btn btn-ghost btn-sm" onClick={downloadMarkdown}>↓ .md</button>
-                      <button className="btn btn-ghost btn-sm" onClick={downloadPdf} disabled={!result.output_files?.["cv_targeted.pdf"]}>↓ PDF</button>
+                      <button className="btn btn-ghost btn-sm" onClick={copyMarkdown} aria-label="Copier le markdown dans le presse-papier">⧉</button>
+                      <button className="btn btn-ghost btn-sm" onClick={downloadMarkdown} aria-label="Télécharger en Markdown">↓ .md</button>
+                      <button className="btn btn-ghost btn-sm" onClick={downloadPdf} disabled={!result.output_files?.["cv_targeted.pdf"]} aria-label="Télécharger le PDF">↓ PDF</button>
                       <a
                         className={`btn btn-ghost btn-sm${result.output_files?.["cv_targeted.docx"] ? "" : " btn-disabled"}`}
                         href={result.output_files?.["cv_targeted.docx"] ? `/api/download/docx?filename=${encodeURIComponent(pdfFilename.trim() || "cv_targeted")}` : undefined}
                         download
+                        aria-label="Télécharger le fichier Word DOCX"
                       >↓ DOCX</a>
                     </div>
                   </div>
@@ -781,8 +782,8 @@ function App() {
                           <div className="exp-title-row">
                             <span className="exp-title">{exp.position || "Expérience"}</span>
                             <div className="exp-actions">
-                              <button className="btn btn-ghost btn-sm" onClick={() => moveExperience(i, -1)} disabled={i === 0}>↑</button>
-                              <button className="btn btn-ghost btn-sm" onClick={() => moveExperience(i, 1)} disabled={i === (editableCv.sections?.["Expérience"] || []).length - 1}>↓</button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => moveExperience(i, -1)} disabled={i === 0} aria-label="Monter cette expérience">↑</button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => moveExperience(i, 1)} disabled={i === (editableCv.sections?.["Expérience"] || []).length - 1} aria-label="Descendre cette expérience">↓</button>
                             </div>
                           </div>
                           <div className="inline-row">

@@ -2,7 +2,17 @@
 Shim de compatibilité — re-exporte tout depuis les trois modules spécialisés.
 Importer directement depuis matching, audit ou markdown est préférable pour
 le nouveau code, mais tous les importeurs existants continuent de fonctionner.
+
+DEPRECATED : ce module sera supprimé dans une future version.
+Migrer les imports vers .matching, .audit ou .markdown directement.
 """
+import warnings
+warnings.warn(
+    "services.generator est déprécié — importez directement depuis "
+    ".matching, .audit ou .markdown selon le symbole souhaité.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 # Re-exports intentionnels — les hints "not accessed" sont attendus dans un shim.
 from .matching import (  # noqa: F401
     find_candidate_evidence_for_requirement,

@@ -150,6 +150,7 @@ def generate_cv(payload: JobRequest):
             payload.job_offer, evidence_bank,
             all_evidence=all_indexed_evidence,
             requirement_groups=req_groups,
+            use_no_think="qwen" in matching_model.lower(),
         )
         matching = call_ollama_json(
             base_url=settings.ollama_base_url,
@@ -189,7 +190,7 @@ def generate_cv(payload: JobRequest):
 
         forbidden_claims = matching.get("forbidden_claims", [])
 
-        generation_prompt = build_generation_prompt(payload.job_offer, matching, allowed_evidence, forbidden_claims, all_evidence=all_indexed_evidence)
+        generation_prompt = build_generation_prompt(payload.job_offer, matching, allowed_evidence, forbidden_claims, all_evidence=all_indexed_evidence, use_no_think="qwen" in generation_model.lower())
         generated = call_ollama_json(
             base_url=settings.ollama_base_url,
             model=generation_model,
@@ -297,6 +298,7 @@ def generate_cv_stream(payload: JobRequest):
                 payload.job_offer, evidence_bank,
                 all_evidence=all_indexed_evidence,
                 requirement_groups=req_groups,
+                use_no_think="qwen" in matching_model.lower(),
             )
             matching_raw = ""
             matching_tokens = 0
@@ -357,6 +359,7 @@ def generate_cv_stream(payload: JobRequest):
                 prompt = build_generation_prompt(
                     payload.job_offer, matching, allowed_evidence, forbidden_claims,
                     all_evidence=all_indexed_evidence, retry_issues=retry_issues,
+                    use_no_think="qwen" in generation_model.lower(),
                 )
                 raw = ""
                 count = 0

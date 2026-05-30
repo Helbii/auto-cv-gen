@@ -186,6 +186,7 @@ def build_matching_prompt(
     evidence_bank: List[Dict[str, Any]],
     all_evidence: Optional[List[Dict[str, Any]]] = None,
     requirement_groups: Optional[Dict[str, Dict[str, List[str]]]] = None,
+    use_no_think: bool = True,
 ) -> str:
     candidate_ctx = build_candidate_context(all_evidence or evidence_bank)
     candidate_block = (
@@ -198,7 +199,7 @@ def build_matching_prompt(
     if requirement_groups:
         groups_block = _format_requirement_groups(requirement_groups)
         return f"""
-/no_think
+{"/no_think" if use_no_think else ""}
 
 Tu es un arbitre de matching CV ↔ offre.
 {candidate_block}
@@ -233,7 +234,7 @@ Réponds uniquement en JSON valide.
 
     # Fallback : prompt original (sans groupes, format JSON complet)
     return f"""
-/no_think
+{"/no_think" if use_no_think else ""}
 
 Tu es un assistant d'analyse de CV.
 {candidate_block}
@@ -313,6 +314,7 @@ def build_generation_prompt(
     forbidden_claims: List[str],
     all_evidence: Optional[List[Dict[str, Any]]] = None,
     retry_issues: Optional[List[str]] = None,
+    use_no_think: bool = True,
 ) -> str:
     candidate_ctx = build_candidate_context(all_evidence or allowed_evidence)
     candidate_block = f"""
@@ -346,7 +348,7 @@ Exploite TOUTES les preuves pertinentes de ALLOWED_EVIDENCE pour atteindre le vo
 """
 
     return f"""
-/no_think
+{"/no_think" if use_no_think else ""}
 
 Tu es un expert en redaction de CV optimises ATS.
 {candidate_block}{retry_block}

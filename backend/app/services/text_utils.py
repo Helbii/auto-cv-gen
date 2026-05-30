@@ -28,10 +28,11 @@ def _raw_words(text: str):
             if len(w) >= 3 and w not in _STOPWORDS]
 
 
-def simple_tokens(text: str) -> Set[str]:
+def unique_tokens(text: str) -> Set[str]:
+    """Retourne un set de tokens sans doublons (contrairement à token_counts)."""
     return set(_raw_words(text))
 
 
 def token_counts(text: str) -> Counter:
-    """Comme simple_tokens mais retourne les fréquences (avec répétitions)."""
+    """Retourne les fréquences des tokens (avec répétitions, contrairement à unique_tokens)."""
     return Counter(_raw_words(text))

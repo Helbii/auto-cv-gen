@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 from .semantic_graph import expand_text_with_graph
 from .storage import get_connection, load_all_evidence
-from .text_utils import normalize_text, simple_tokens, token_counts
+from .text_utils import normalize_text, unique_tokens, token_counts
 
 IMPORTANT_CATEGORIES = {
     "profile",
@@ -62,7 +62,7 @@ def _compute_idf(all_evidence: List[Dict[str, Any]]) -> Dict[str, float]:
     doc_freq: Dict[str, int] = {}
     for ev in all_evidence:
         full_text = f"{ev['category']} {ev['source']} {ev['field']} {ev['text']}"
-        for tok in simple_tokens(full_text):
+        for tok in unique_tokens(full_text):
             doc_freq[tok] = doc_freq.get(tok, 0) + 1
     idf = {tok: math.log((N + 1) / (df + 1)) for tok, df in doc_freq.items()}
 
@@ -118,7 +118,7 @@ def retrieve_relevant_evidence(sqlite_path: Path, job_offer: str, top_k: int = 3
     # ── 2) Scoring TF-IDF (remplace le simple comptage de tokens) ────────────
     for ev in all_evidence:
         full_text = f"{ev['category']} {ev['source']} {ev['field']} {ev['text']}"
-        ev_tokens = simple_tokens(full_text)
+        ev_tokens = unique_tokens(full_text)
         overlap = offer_tokens.intersection(ev_tokens)
         if not overlap:
             continue
