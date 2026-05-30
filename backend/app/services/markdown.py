@@ -2,6 +2,9 @@
 Génération des fichiers Markdown (CV recruteur, audit, email)
 et utilitaires de formatage dates/localisation.
 """
+from __future__ import annotations
+
+import datetime
 import json
 import re
 from pathlib import Path
@@ -120,7 +123,6 @@ def build_skill_experience_map(cv_master: Optional[Dict[str, Any]]) -> Dict[str,
     """
     if not isinstance(cv_master, dict):
         return {}
-    import datetime
     now_months = datetime.date.today().year * 12 + datetime.date.today().month - 1
 
     tech_intervals: Dict[str, List[tuple]] = {}

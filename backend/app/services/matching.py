@@ -2,6 +2,7 @@
 Extraction et classification des exigences d'une offre d'emploi,
 pipeline de matching et calcul du score ATS.
 """
+import datetime
 import json
 import re
 from pathlib import Path
@@ -371,7 +372,6 @@ def _exp_months(start: Any, end: Any, is_current: bool = False) -> tuple:
         if m:
             return int(m.group(1)) * 12
         return None
-    import datetime
     s = to_months(start)
     e = (datetime.date.today().year * 12 + datetime.date.today().month - 1) if is_current else to_months(end)
     return s, e

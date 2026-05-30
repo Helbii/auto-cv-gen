@@ -2,6 +2,8 @@
 Audit anti-hallucination du CV généré et résolution des contenus safe
 (titre, résumé, email) en cas de claim interdit détecté.
 """
+from __future__ import annotations
+
 import re
 from typing import Any, Dict, List, Set
 

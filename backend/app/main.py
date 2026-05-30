@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import json
 import logging
 import re
 from fastapi import FastAPI, HTTPException, Query
-
-logger = logging.getLogger(__name__)
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+logger = logging.getLogger(__name__)
 
 from .core.config import settings
 from .schemas import JobRequest, UploadCVRequest, UpdatePdfRequest
