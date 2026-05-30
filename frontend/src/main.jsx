@@ -54,6 +54,7 @@ function App() {
   const [steps, setSteps]             = useState(null);
   const [cvFilename, setCvFilename]   = useState("");
   const fileInputRef                  = useRef(null);
+  const abortControllerRef            = useRef(null);
   const [history, setHistory]         = useState([]);
   const [activeHistoryId, setActiveHistoryId] = useState(null);
   const [editedMarkdown, setEditedMarkdown]   = useState({});
@@ -89,9 +90,10 @@ function App() {
 
   async function deleteHistoryEntry(id) {
     try {
-      await fetch(`/api/history/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/history/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Suppression échouée côté serveur.");
       setHistory(prev => prev.filter(e => e.id !== id));
-    } catch {}
+    } catch (e) { setError(e.message); }
   }
 
   const freshSteps = () => PIPELINE_STEPS.map(s => ({ ...s, status: "pending", detail: null }));
@@ -141,6 +143,25 @@ function App() {
 
   async function generateCv() {
     if (!jobOffer.trim()) { setError("Colle d'abord une offre d'emploi."); return; }
+
+    const preset = MODEL_PRESETS.find(x => x.value === modelPreset);
+    if (!preset) { setError("Preset modèle inconnu."); return; }
+
+    const payload = {
+      job_offer: jobOffer,
+      matching_model: preset.matching,
+      generation_model: preset.generation,
+      top_k: Number(topK),
+      offer_url: offerUrl.trim() || null,
+      pdf_design: pdfDesign,
+      custom_title: customTitle.trim() || null,
+    };
+
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const timeoutId = setTimeout(() => controller.abort(), 300_000);
+
     setLoading(true); setError(""); setResult(null); setEditableCv(null); setStatus("");
     setActiveHistoryId(null); setEditedMarkdown({});
     setHiddenSections({});
@@ -150,7 +171,8 @@ function App() {
       const res = await fetch("/api/generate-cv/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify((() => { const p = MODEL_PRESETS.find(x => x.value === modelPreset); return { job_offer: jobOffer, matching_model: p?.matching, generation_model: p?.generation, top_k: Number(topK), offer_url: offerUrl.trim() || null, pdf_design: pdfDesign, custom_title: customTitle.trim() || null }; })()),
+        body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -214,9 +236,14 @@ function App() {
         }
       }
     } catch (e) {
-      setError(e.message);
+      if (e.name === "AbortError") {
+        setError("Génération annulée ou délai dépassé (5 min).");
+      } else {
+        setError(e.message);
+      }
       setSteps(prev => prev?.map(s => s.status === "running" ? { ...s, status: "error" } : s));
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   }
@@ -319,18 +346,16 @@ function App() {
   }
   function applyDesignPreset(mode) {
     const presets = {
-      fill: { preset: "airy", font_size: 9.85, margin: "large", section_spacing: 0.28, entry_spacing: 0.76, bullet_spacing: 0.07 },
-      compact: { preset: "compact", font_size: 8.75, margin: "compact", section_spacing: 0.14, entry_spacing: 0.42, bullet_spacing: 0.03 },
-      tech: { preset: "tech", font_size: 9.15, margin: "normal", section_spacing: 0.18, entry_spacing: 0.52, bullet_spacing: 0.04 },
+      fill:    { preset: "airy",    font_size: 9.75, margin: "large",   section_spacing: 0.26, entry_spacing: 0.72, bullet_spacing: 0.06 },
+      compact: { preset: "compact", font_size: 8.75, margin: "compact", section_spacing: 0.16, entry_spacing: 0.46, bullet_spacing: 0.035 },
+      tech:    { preset: "tech",    font_size: 9.15, margin: "normal",  section_spacing: 0.18, entry_spacing: 0.52, bullet_spacing: 0.04 },
     };
     setPdfDesign(design => ({ ...design, ...(presets[mode] || {}) }));
   }
 
   const audit = result?.audit;
   const scoreBreakdown = result?.matching?.score_breakdown;
-  const originalMarkdown = outputMode === "cv" ? result?.final_markdown
-    : outputMode === "email" ? null /* lettre désactivée temporairement */
-    : result?.audit_markdown;
+  const originalMarkdown = outputMode === "cv" ? result?.final_markdown : result?.audit_markdown;
   // Texte édité par mode (null = utilise l'original du résultat)
   const markdown = editedMarkdown[outputMode] ?? originalMarkdown ?? "";
 
