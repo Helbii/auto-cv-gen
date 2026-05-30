@@ -1,6 +1,9 @@
 import json
+import logging
 import re
 from fastapi import FastAPI, HTTPException, Query
+
+logger = logging.getLogger(__name__)
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,7 +33,7 @@ from .services.generator import (
     generate_email_markdown,
     save_outputs,
 )
-from .services.rendercv_export import build_design, build_rendercv_yaml_data, export_rendercv_files, render_rendercv_data
+from .services.rendercv_export import build_rendercv_yaml_data, export_rendercv_files, render_rendercv_data
 from .services.docx_export import generate_cv_docx
 from .services.history import (
     init_history_db, make_history_folder, save_generation,
@@ -95,7 +98,8 @@ def index_cv():
             "evidence_file": str(evidence_path),
         }
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.exception("Erreur lors de l'indexation du CV")
+        raise HTTPException(status_code=500, detail="Erreur lors de l'indexation. Vérifiez les logs.")
 
 
 @app.get("/api/evidence")
@@ -194,11 +198,9 @@ def generate_cv(payload: JobRequest):
         final_md = generate_markdown(matching, generated, audit, id_to_evidence, cv_master)
         audit_md = generate_audit_markdown(matching, generated, audit, id_to_evidence)
         email_md = generate_email_markdown(matching, generated, audit)
-        rendercv_data = build_rendercv_yaml_data(matching, generated, audit, id_to_evidence, cv_master=cv_master)
+        rendercv_data = build_rendercv_yaml_data(matching, generated, audit, id_to_evidence, cv_master=cv_master, options=payload.pdf_design)
         if payload.custom_title:
             rendercv_data.setdefault("cv", {})["headline"] = payload.custom_title
-        if payload.pdf_design:
-            rendercv_data["design"] = build_design(payload.pdf_design)
         rendercv_files = render_rendercv_data(settings.output_dir, rendercv_data)
 
         output_files = save_outputs(settings.output_dir, {
@@ -228,7 +230,8 @@ def generate_cv(payload: JobRequest):
     except OllamaError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.exception("Erreur inattendue lors de la génération CV")
+        raise HTTPException(status_code=500, detail="Erreur interne lors de la génération. Vérifiez les logs.")
 
 
 def _sse(data: dict) -> str:
@@ -404,19 +407,17 @@ def generate_cv_stream(payload: JobRequest):
             })
 
             yield _sse({"step": "rendering", "message": "Génération PDF & DOCX..."})
-            rendercv_data = build_rendercv_yaml_data(matching, generated, audit, id_to_evidence, cv_master=cv_master)
+            rendercv_data = build_rendercv_yaml_data(matching, generated, audit, id_to_evidence, cv_master=cv_master, options=payload.pdf_design)
             if payload.custom_title:
                 rendercv_data.setdefault("cv", {})["headline"] = payload.custom_title
-            if payload.pdf_design:
-                rendercv_data["design"] = build_design(payload.pdf_design)
             rendercv_files = render_rendercv_data(settings.output_dir, rendercv_data)
 
             docx_path = settings.output_dir / "cv_targeted.docx"
             try:
                 generate_cv_docx(matching, generated, audit, id_to_evidence, cv_master, docx_path)
                 rendercv_files["cv_targeted.docx"] = str(docx_path)
-            except Exception:
-                pass  # DOCX non bloquant
+            except Exception as exc:
+                logger.warning("DOCX non généré (non bloquant) : %s", exc)
 
             output_files = save_outputs(settings.output_dir, {
                 "retrieved_evidence.json": evidence_bank,
@@ -513,7 +514,8 @@ def update_pdf(payload: UpdatePdfRequest):
             "output_files": output_files,
         }
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.exception("Erreur lors de la mise à jour du PDF")
+        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour du PDF. Vérifiez les logs.")
 
 
 @app.get("/api/history")
