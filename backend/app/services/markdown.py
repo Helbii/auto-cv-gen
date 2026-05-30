@@ -137,6 +137,9 @@ def build_skill_experience_map(cv_master: Optional[Dict[str, Any]]) -> Dict[str,
     return result
 
 
+_DURATION_ANNOTATION_RE = re.compile(r"\(\d+ ans?\)$")
+
+
 def annotate_audit_skills(audit: Dict[str, Any], cv_master: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Enrichit les noms de compétences validées avec leur durée d'expérience.
@@ -150,8 +153,8 @@ def annotate_audit_skills(audit: Dict[str, Any], cv_master: Optional[Dict[str, A
         name = str(item.get("skill", "")).strip()
         if not name:
             continue
-        # Évite de ré-annoter si déjà fait (idempotent)
-        if "(" in name:
+        # Évite de ré-annoter si déjà fait — teste le pattern exact "(N an[s])"
+        if _DURATION_ANNOTATION_RE.search(name):
             continue
         years = exp_map.get(normalize_text(name))
         if years:
