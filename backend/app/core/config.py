@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 from pydantic_settings import BaseSettings
 
 
@@ -7,6 +8,7 @@ class Settings(BaseSettings):
     matching_model: str = "qwen3:8b"
     generation_model: str = "qwen3:14b"
     ollama_base_url: str = "http://host.docker.internal:11434"
+    allowed_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
     top_k: int = 45
     max_evidence_for_llm: int = 60
     cv_path: Path = Path("/app/data/cv_master.json")
