@@ -26,6 +26,19 @@ services:
       - backend
     restart: unless-stopped
 
+  languagetool:
+    image: erikvl87/languagetool:latest
+    container_name: auto-cv-languagetool
+    environment:
+      - Java_Xmx=512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8010/v2/languages || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
+
   # Optionnel : utiliser Ollama dans Docker au lieu d'Ollama installé sur Windows.
   # Lance avec : docker compose --profile ollama up --build
   # Puis dans .env : OLLAMA_BASE_URL=http://ollama:11434

@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
+from .esco import esco_normalize
 from .semantic_graph import expand_text_with_graph
 from .storage import get_connection, load_all_evidence
 from .text_utils import normalize_text, unique_tokens, token_counts
@@ -72,7 +73,7 @@ def _compute_idf(all_evidence: List[Dict[str, Any]]) -> Dict[str, float]:
 
 
 def expand_offer_for_retrieval(job_offer: str) -> str:
-    return expand_text_with_graph(job_offer)
+    return esco_normalize(expand_text_with_graph(job_offer))
 
 
 def retrieve_relevant_evidence(sqlite_path: Path, job_offer: str, top_k: int = 30) -> List[Dict[str, Any]]:
@@ -117,7 +118,7 @@ def retrieve_relevant_evidence(sqlite_path: Path, job_offer: str, top_k: int = 3
 
     # ── 2) Scoring TF-IDF (remplace le simple comptage de tokens) ────────────
     for ev in all_evidence:
-        full_text = f"{ev['category']} {ev['source']} {ev['field']} {ev['text']}"
+        full_text = esco_normalize(f"{ev['category']} {ev['source']} {ev['field']} {ev['text']}")
         ev_tokens = unique_tokens(full_text)
         overlap = offer_tokens.intersection(ev_tokens)
         if not overlap:
@@ -138,7 +139,7 @@ def retrieve_relevant_evidence(sqlite_path: Path, job_offer: str, top_k: int = 3
     for ev in all_evidence:
         if ev["category"] not in {"skill", "experience_tech", "project_skill", "profile_strength"}:
             continue
-        normalized_evidence = normalize_text(ev["text"])
+        normalized_evidence = esco_normalize(ev["text"])
         if not normalized_evidence:
             continue
         if len(normalized_evidence) <= 4:

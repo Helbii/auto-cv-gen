@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     history_db_path: Path = Path("/app/storage/history.sqlite")
     output_dir: Path = Path("/app/outputs")
     custom_themes_dir: Path = Path("/custom")
+    esco_dict_path: Path = Path("/app/data/esco_dict")
+    languagetool_url: str = "http://languagetool:8010"
 
 
 settings = Settings()

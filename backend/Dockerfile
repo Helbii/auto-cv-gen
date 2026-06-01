@@ -7,7 +7,11 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    chromium \
     && rm -rf /var/lib/apt/lists/*
+
+# Chromium Debian → Playwright l'utilise via executable_path, pas besoin de "playwright install"
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt

@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List
+from .esco import esco_normalize
 from .text_utils import normalize_text
 
 
@@ -43,7 +44,7 @@ def init_db(sqlite_path: Path) -> None:
 def index_evidence(sqlite_path: Path, evidence_bank: List[Dict[str, Any]]) -> None:
     init_db(sqlite_path)
     with get_connection(sqlite_path) as conn:
-        conn.execute("DELETE FROM evidence_fts")
+        conn.execute("INSERT INTO evidence_fts(evidence_fts) VALUES('delete-all')")
         conn.execute("DELETE FROM evidence")
         for ev in evidence_bank:
             conn.execute(
@@ -65,7 +66,7 @@ def index_evidence(sqlite_path: Path, evidence_bank: List[Dict[str, Any]]) -> No
                 INSERT INTO evidence_fts (id, category, source, field, text)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (ev["id"], ev["category"], ev["source"], ev["field"], ev["text"]),
+                (ev["id"], ev["category"], ev["source"], ev["field"], esco_normalize(ev["text"])),
             )
         conn.commit()
 

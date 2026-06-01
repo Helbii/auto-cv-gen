@@ -331,10 +331,9 @@ def generate_database_recruiter_markdown(
     contact = profile.get("contact", {})
     full_name = " ".join(part for part in [profile.get("firstName"), profile.get("lastName")] if part)
     title = resolve_safe_title(matching, generated, audit)
-    lines = [f"# {title}", ""]
+    lines = [f"# {full_name}", f"**{title}**", ""]
 
     contact_items = [
-        full_name,
         format_location(profile.get("location")),
         contact.get("email"),
         contact.get("phone"),
@@ -450,12 +449,11 @@ def generate_recruiter_markdown(
     static_sections = extract_static_cv_sections(id_to_evidence)
     lines = []
     title = resolve_safe_title(matching, generated, audit)
-    lines.append(f"# {title}")
+    name = static_sections["identity"].get("nom")
+    lines.append(f"# {name}" if name else f"# {title}")
+    lines.append(f"**{title}**")
     lines.append("")
     contact_items = []
-    name = static_sections["identity"].get("nom")
-    if name:
-        contact_items.append(name)
     if static_sections["locations"]:
         contact_items.append(", ".join(static_sections["locations"]))
     for field in ["email", "telephone", "linkedin", "github"]:
@@ -594,6 +592,163 @@ def generate_markdown(
     cv_master: Dict[str, Any] | None = None,
 ) -> str:
     return generate_recruiter_markdown(matching, generated, audit, id_to_evidence, cv_master=cv_master)
+
+
+_DEGREE_PREFIX_FR_TO_EN: Dict[str, str] = {
+    "diplôme d'ingénieur":                     "Engineering Degree",
+    "master":                                   "Master's Degree",
+    "licence":                                  "Bachelor's Degree",
+    "doctorat":                                 "PhD",
+    "dut génie électrique et informatique industrielle": "2-Year Tech Degree — Electrical & Industrial IT",
+    "dut génie électrique":                     "2-Year Tech Degree — Electrical Engineering",
+    "dut informatique":                         "2-Year Tech Degree — Computer Science",
+    "dut":                                      "2-Year Technical University Degree",
+    "bts":                                      "Advanced Vocational Certificate",
+    "baccalauréat sti2d":                       "High School Diploma — Science & Technology",
+    "baccalauréat s":                           "High School Diploma — Sciences",
+    "baccalauréat":                             "High School Diploma",
+    "classe préparatoire ats":                  "Preparatory Class (ATS — Advanced Technician Sciences)",
+    "classe préparatoire mpsi":                 "Preparatory Class (MPSI)",
+    "classe préparatoire pcsi":                 "Preparatory Class (PCSI)",
+    "classe préparatoire":                      "Preparatory Class",
+}
+
+
+def _translate_degree(degree: str) -> str:
+    """Map common French degree names to English using a prefix dictionary."""
+    lower = degree.lower()
+    for fr_prefix, en in _DEGREE_PREFIX_FR_TO_EN.items():
+        if lower.startswith(fr_prefix):
+            remainder = degree[len(fr_prefix):].strip()
+            if remainder and not remainder.startswith("—"):
+                return f"{en} — {remainder}"
+            return en
+    return degree
+
+
+_LEVEL_FR_TO_EN: Dict[str, str] = {
+    "natif":             "Native",
+    "langue maternelle": "Native",
+    "courant":           "Fluent",
+    "parlé":             "Spoken",
+    "avancé":            "Advanced",
+    "intermédiaire":     "Intermediate",
+    "débutant":          "Basic",
+    "notions":           "Basic",
+    "bilingue":          "Bilingual",
+    "b2":                "B2",
+    "b1":                "B1",
+    "c1":                "C1",
+    "c2":                "C2",
+}
+
+
+def generate_en_markdown(
+    cv_en: Dict[str, Any],
+    cv_master: Dict[str, Any] | None = None,
+) -> str:
+    from collections import OrderedDict
+    lines: List[str] = []
+    master = cv_master or {}
+    database_mode = is_database_cv(master)
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    profile = master.get("profile", {})
+    name = f"{profile.get('firstName', '')} {profile.get('lastName', '')}".strip()
+    if name:
+        contact  = profile.get("contact", {})
+        location = profile.get("location", {})
+        loc_str  = ", ".join(p for p in [location.get("city"), location.get("country")] if p)
+        parts    = [p for p in [loc_str, contact.get("email"), contact.get("phone"),
+                                 contact.get("github"), contact.get("linkedin")] if p]
+        lines.append(f"# {name}")
+        job_title = cv_en.get("title", "").strip()
+        if job_title:
+            lines.append(f"**{job_title}**")
+        if parts:
+            lines.append(" | ".join(parts))
+
+    # ── Professional Summary ──────────────────────────────────────────────────
+    summary = cv_en.get("professional_summary", "").strip()
+    if summary:
+        lines.append("\n## Professional Summary\n")
+        lines.append(summary)
+
+    # ── Key Skills ────────────────────────────────────────────────────────────
+    skills_raw = cv_en.get("skills_to_display") or []
+    skills = [s.get("skill", s) if isinstance(s, dict) else str(s) for s in skills_raw if s]
+    if skills:
+        lines.append("\n## Key Skills\n")
+        for skill in skills:
+            lines.append(f"- {skill}")
+
+    # ── Experience ────────────────────────────────────────────────────────────
+    raw_bullets = [b for b in (cv_en.get("experience_bullets") or []) if isinstance(b, dict) and b.get("bullet")]
+    if raw_bullets:
+        lines.append("\n## Experience\n")
+        grouped: dict = OrderedDict()
+        for b in raw_bullets:
+            grouped.setdefault(b.get("source", ""), []).append(b["bullet"])
+        for source, src_bullets in grouped.items():
+            if source:
+                lines.append(f"**{source}**")
+            for bullet in src_bullets:
+                lines.append(f"- {bullet}")
+            lines.append("")
+
+    # ── Projects (database mode only — titles and tech stacks need no translation) ──
+    if database_mode:
+        projects = master.get("projects", [])
+        if projects:
+            lines.append("\n## Projects\n")
+            for proj in projects[:3]:
+                proj_name = str(proj.get("name", "")).strip()
+                proj_date = format_cv_date(proj.get("startDate"), proj.get("endDate"))
+                header = f"**{proj_name}**" + (f" — {proj_date}" if proj_date else "")
+                lines.append(header)
+                desc = str(proj.get("description", "")).strip()
+                if desc:
+                    first_sentence = re.split(r"(?<=[.!?])\s+", desc)[0][:150]
+                    lines.append(first_sentence)
+                techs = [str(t) for t in proj.get("technologies", []) if t][:6]
+                if techs:
+                    lines.append(f"Stack: {', '.join(techs)}")
+                lines.append("")
+
+    # ── Education ─────────────────────────────────────────────────────────────
+    if database_mode:
+        education = master.get("education", [])
+        if education:
+            lines.append("\n## Education\n")
+            for edu in education[:4]:
+                school = str(edu.get("school", "")).strip()
+                degree = _translate_degree(str(edu.get("degree", "")).strip())
+                edu_date = format_cv_date(
+                    edu.get("startDate"), edu.get("endDate"), bool(edu.get("isCurrent"))
+                )
+                parts_edu = [p for p in [school, degree, edu_date] if p]
+                lines.append(f"- **{' — '.join(parts_edu)}**")
+            lines.append("")
+
+    # ── Languages ─────────────────────────────────────────────────────────────
+    if database_mode:
+        lang_entries = master.get("languages", [])
+        certifications = [c.get("name") for c in master.get("certifications", []) if c.get("name")]
+        lang_lines: List[str] = []
+        for lang in lang_entries:
+            language_name = str(lang.get("language", "")).strip()
+            level_fr = str(lang.get("level", "")).strip()
+            level_en = _LEVEL_FR_TO_EN.get(level_fr.lower(), level_fr)
+            if language_name:
+                lang_lines.append(f"{language_name}: {level_en}")
+        if certifications and len(lang_lines) >= 2:
+            lang_lines[1] = f"{lang_lines[1]} ({certifications[0]})"
+        if lang_lines:
+            lines.append("\n## Languages\n")
+            for entry in lang_lines:
+                lines.append(f"- {entry}")
+
+    return "\n".join(lines)
 
 
 # ── Persistence ───────────────────────────────────────────────────────────────

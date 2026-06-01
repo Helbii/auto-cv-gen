@@ -53,8 +53,18 @@ function App() {
   const [pdfKey, setPdfKey]           = useState(Date.now());
   const [steps, setSteps]             = useState(null);
   const [cvFilename, setCvFilename]   = useState("");
+  const [offerMode, setOfferMode]     = useState("text");
+  const [scrapeUrl, setScrapeUrl]     = useState("");
+  const [scraping, setScraping]       = useState(false);
+  const [scrapeError, setScrapeError] = useState("");
+  const [translating, setTranslating]       = useState(false);
+  const [lang, setLang]                     = useState("fr");
+  const [resultEn, setResultEn]             = useState(null);
+  const [savedFrEditableCv, setSavedFrEditableCv] = useState(null);
   const fileInputRef                  = useRef(null);
   const abortControllerRef            = useRef(null);
+  const markdownDebounceRef           = useRef(null);
+  const [renderingFromMd, setRenderingFromMd] = useState(false);
   const [history, setHistory]         = useState([]);
   const [activeHistoryId, setActiveHistoryId] = useState(null);
   const [editedMarkdown, setEditedMarkdown]   = useState({});
@@ -65,6 +75,39 @@ function App() {
     fetchHistory();
     fetch("/api/config").then(r => r.json()).then(setServerConfig).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const mdText = editedMarkdown[outputMode];
+    if (!result || outputMode !== "cv" || mdText == null) return;
+    const capturedBaseCv = editableCv;
+    const capturedDesign = pdfDesign;
+    const capturedLang   = lang;
+    if (markdownDebounceRef.current) clearTimeout(markdownDebounceRef.current);
+    markdownDebounceRef.current = setTimeout(async () => {
+      setRenderingFromMd(true);
+      try {
+        const res = await fetch("/api/render-markdown", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            markdown:   mdText,
+            base_cv:    capturedBaseCv || {},
+            pdf_design: capturedDesign,
+            lang:       capturedLang,
+          }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setEditableCv(data.editable_cv);
+        setPdfKey(Date.now());
+      } catch (_) {
+        // silent — ne pas bloquer l'édition
+      } finally {
+        setRenderingFromMd(false);
+      }
+    }, 600);
+    return () => { if (markdownDebounceRef.current) clearTimeout(markdownDebounceRef.current); };
+  }, [editedMarkdown, outputMode, result]);
 
   async function fetchHistory() {
     try {
@@ -86,6 +129,7 @@ function App() {
       setHiddenSections({});
       setPdfKey(Date.now());
       setOutputMode("cv");
+      setLang("fr"); setResultEn(null); setSavedFrEditableCv(null);
       setSteps(PIPELINE_STEPS.map(s => ({ ...s, status: "done", detail: null })));
       setStatus("");
     } catch (e) { setError(e.message); }
@@ -167,6 +211,7 @@ function App() {
     const timeoutId = setTimeout(() => controller.abort(), 300_000);
 
     setLoading(true); setError(""); setResult(null); setEditableCv(null); setStatus("");
+    setLang("fr"); setResultEn(null); setSavedFrEditableCv(null);
     setActiveHistoryId(null); setEditedMarkdown({});
     setHiddenSections({});
     setOutputMode("cv"); setSteps(freshSteps());
@@ -250,6 +295,74 @@ function App() {
       clearTimeout(timeoutId);
       setLoading(false);
     }
+  }
+
+  async function handleScrape() {
+    if (!scrapeUrl.trim()) { setScrapeError("Entre une URL valide."); return; }
+    setScraping(true);
+    setScrapeError("");
+    try {
+      const res = await fetch("/api/scrape-offer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: scrapeUrl.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Erreur lors de la récupération.");
+      }
+      const data = await res.json();
+      setJobOffer(data.full_description);
+      if (data.title && !customTitle) setCustomTitle(data.title);
+      if (!offerUrl) setOfferUrl(scrapeUrl.trim());
+      setOfferMode("text");
+    } catch (e) {
+      setScrapeError(e.message);
+    } finally {
+      setScraping(false);
+    }
+  }
+
+  async function translateCv() {
+    const mdFr = editedMarkdown["cv"] ?? result?.final_markdown;
+    if (!mdFr) return;
+    setTranslating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/translate-cv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          final_markdown: mdFr,
+          base_cv:        editableCv || {},
+          pdf_design:     pdfDesign,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Erreur traduction");
+      }
+      const data = await res.json();
+      setSavedFrEditableCv(editableCv);
+      setResultEn(data);
+      setEditableCv(data.editable_cv || null);
+      setEditedMarkdown({});
+      setLang("en");
+      setPdfKey(Date.now());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  function switchLang(target) {
+    if (target === lang) return;
+    if (target === "en" && !resultEn) { translateCv(); return; }
+    setLang(target);
+    setEditableCv(target === "en" ? resultEn?.editable_cv : savedFrEditableCv);
+    setEditedMarkdown({});
+    setPdfKey(Date.now());
   }
 
   function downloadPdf() {
@@ -363,7 +476,9 @@ function App() {
 
   const audit = result?.audit;
   const scoreBreakdown = result?.matching?.score_breakdown;
-  const originalMarkdown = outputMode === "cv" ? result?.final_markdown : result?.audit_markdown;
+  const originalMarkdown = lang === "en" && resultEn
+    ? resultEn.final_markdown
+    : (outputMode === "cv" ? result?.final_markdown : result?.audit_markdown);
   // Texte édité par mode (null = utilise l'original du résultat)
   const markdown = editedMarkdown[outputMode] ?? originalMarkdown ?? "";
 
@@ -525,9 +640,50 @@ function App() {
                   onChange={e => setCustomTitle(e.target.value)}
                 />
               </div>
+
+              <div className="offer-mode-toggle">
+                <button
+                  className={`mode-btn${offerMode === "text" ? " active" : ""}`}
+                  onClick={() => setOfferMode("text")}
+                >
+                  ✏️ Coller le texte
+                </button>
+                <button
+                  className={`mode-btn${offerMode === "scrape" ? " active" : ""}`}
+                  onClick={() => { setOfferMode("scrape"); setScrapeError(""); }}
+                >
+                  🔗 Scraper une URL
+                </button>
+              </div>
+
+              {offerMode === "scrape" && (
+                <div className="scrape-row">
+                  <input
+                    className="inp scrape-url-inp"
+                    type="url"
+                    placeholder="https://www.apec.fr/…  ·  welcometothejungle.com  ·  hellowork.com…"
+                    value={scrapeUrl}
+                    onChange={e => setScrapeUrl(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleScrape()}
+                  />
+                  <button className="btn btn-sec" onClick={handleScrape} disabled={scraping}>
+                    {scraping ? <><span className="btn-spin" />Récupération…</> : "Récupérer →"}
+                  </button>
+                </div>
+              )}
+              {offerMode === "scrape" && !scrapeError && (
+                <p className="scrape-hint">
+                  Fonctionne sur APEC, Welcome to the Jungle, HelloWork, Cadremploi…
+                  LinkedIn et Indeed bloquent le scraping — colle le texte directement.
+                </p>
+              )}
+              {scrapeError && <div className="bar bar-err">{scrapeError}</div>}
+
               <textarea
                 className="inp textarea offer-ta"
-                placeholder="Colle ici l'offre complète…"
+                placeholder={offerMode === "scrape" && !jobOffer
+                  ? "Le texte de l'offre apparaîtra ici après récupération…"
+                  : "Colle ici l'offre complète…"}
                 value={jobOffer}
                 onChange={e => setJobOffer(e.target.value)}
               />
@@ -620,12 +776,25 @@ function App() {
                       {[["cv","CV recruteur"],["audit","Audit"]].map(([id, lbl]) => (
                         <button key={id} className={`tab ${outputMode === id ? "active" : ""}`} onClick={() => setOutputMode(id)}>{lbl}</button>
                       ))}
+                      <div className="lang-toggle">
+                        <button className={`lang-btn${lang === "fr" ? " active" : ""}`} onClick={() => switchLang("fr")}>🇫🇷 FR</button>
+                        <button className={`lang-btn${lang === "en" ? " active" : ""}`} onClick={() => switchLang("en")} disabled={translating}>
+                          {translating ? <><span className="btn-spin" /></> : "🇬🇧 EN"}
+                        </button>
+                      </div>
                     </div>
                     <div className="output-actions">
                       <input className="inp inp-sm pdf-name" value={pdfFilename} onChange={e => setPdfFilename(e.target.value)} placeholder="nom_pdf" />
                       <button className="btn btn-ghost btn-sm" onClick={copyMarkdown} aria-label="Copier le markdown dans le presse-papier">⧉</button>
                       <button className="btn btn-ghost btn-sm" onClick={downloadMarkdown} aria-label="Télécharger en Markdown">↓ .md</button>
-                      <button className="btn btn-ghost btn-sm" onClick={downloadPdf} disabled={!result.output_files?.["cv_targeted.pdf"]} aria-label="Télécharger le PDF">↓ PDF</button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={lang === "en"
+                          ? () => window.open(`/api/download/pdf-en?filename=${encodeURIComponent((pdfFilename.trim() || "cv") + "_en")}`, "_blank")
+                          : downloadPdf}
+                        disabled={lang === "en" ? !resultEn : !result.output_files?.["cv_targeted.pdf"]}
+                        aria-label="Télécharger le PDF"
+                      >↓ PDF</button>
                       <a
                         className={`btn btn-ghost btn-sm${result.output_files?.["cv_targeted.docx"] ? "" : " btn-disabled"}`}
                         href={result.output_files?.["cv_targeted.docx"] ? `/api/download/docx?filename=${encodeURIComponent(pdfFilename.trim() || "cv_targeted")}` : undefined}
@@ -642,14 +811,17 @@ function App() {
                       spellCheck={false}
                     />
                   </div>
-                  {editedMarkdown[outputMode] != null && (
-                    <div className="out-edit-footer">
-                      <span className="out-edit-note">✎ Texte modifié — le PDF utilise l'éditeur structuré ci-dessous</span>
+                  <div className="out-edit-footer">
+                    {renderingFromMd && <span className="out-edit-note">⟳ Rendu en cours…</span>}
+                    {!renderingFromMd && editedMarkdown[outputMode] != null && (
+                      <span className="out-edit-note">✎ Modifié — PDF mis à jour automatiquement</span>
+                    )}
+                    {editedMarkdown[outputMode] != null && (
                       <button className="btn btn-ghost btn-sm" onClick={() => setEditedMarkdown(prev => { const n = { ...prev }; delete n[outputMode]; return n; })}>
                         Réinitialiser
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -741,87 +913,23 @@ function App() {
                       </label>
                       <button className="btn btn-sec btn-sm" onClick={() => applyDesignPreset("fill")} disabled={loading}>Remplir</button>
                       <button className="btn btn-sec btn-sm" onClick={() => applyDesignPreset("compact")} disabled={loading}>Compacter</button>
-                      <button className="btn btn-pri" onClick={updatePdf} disabled={loading}>Mettre à jour</button>
+                      <button className="btn btn-pri" onClick={updatePdf} disabled={loading || lang === "en"} title={lang === "en" ? "Modification du thème disponible en mode FR" : ""}>Mettre à jour</button>
                     </div>
                   </div>
                   <div className="editor-body">
                     <div className="editor-fields">
-                      <div className="section-toggles">
-                        {SECTION_LABELS.map(name => (
-                          <label key={name} className={`section-toggle ${editableCv.sections?.[name] ? "on" : "off"}`}>
-                            <input type="checkbox" checked={!!editableCv.sections?.[name]} onChange={() => toggleSection(name)} />
-                            <span>{name}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {editableCv.sections?.["Résumé"] && (
-                        <label className="field">
-                          <span className="flabel">Résumé</span>
-                          <textarea className="inp textarea ta-sm"
-                            value={editableCv.sections?.["Résumé"]?.[0] || ""}
-                            onChange={e => patchSection("Résumé", [e.target.value])} />
-                        </label>
-                      )}
-                      {editableCv.sections?.["Compétences clés"] && (
-                        <div className="edit-block">
-                          <div className="edit-block-head">
-                            <span className="flabel">Compétences</span>
-                            <button className="btn btn-ghost btn-sm" onClick={addSkill}>+ compétence</button>
-                          </div>
-                          {(editableCv.sections?.["Compétences clés"] || []).map((skill, i) => (
-                            <div className="skill-row" key={i}>
-                              <input className="inp inp-skill-label" value={skill.label || ""} onChange={e => patchSkill(i, { label: e.target.value })} placeholder="Label" />
-                              <input className="inp" value={skill.details || ""} onChange={e => patchSkill(i, { details: e.target.value })} placeholder="Détails" />
-                              <button className="btn btn-icon" onClick={() => removeSkill(i)}>✕</button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {(editableCv.sections?.["Expérience"] || []).map((exp, i) => (
-                        <div className="exp-block" key={i}>
-                          <div className="exp-title-row">
-                            <span className="exp-title">{exp.position || "Expérience"}</span>
-                            <div className="exp-actions">
-                              <button className="btn btn-ghost btn-sm" onClick={() => moveExperience(i, -1)} disabled={i === 0} aria-label="Monter cette expérience">↑</button>
-                              <button className="btn btn-ghost btn-sm" onClick={() => moveExperience(i, 1)} disabled={i === (editableCv.sections?.["Expérience"] || []).length - 1} aria-label="Descendre cette expérience">↓</button>
-                            </div>
-                          </div>
-                          <div className="inline-row">
-                            <input className="inp" value={exp.position || ""} onChange={e => patchExp(i, { position: e.target.value })} placeholder="Poste" />
-                            <input className="inp" value={exp.company  || ""} onChange={e => patchExp(i, { company:  e.target.value })} placeholder="Entreprise" />
-                            <input className="inp inp-sm" value={exp.date || ""} onChange={e => patchExp(i, { date: e.target.value })} placeholder="Date" />
-                          </div>
-                          <div className="bullet-list">
-                            {(exp.highlights || []).map((bullet, j) => (
-                              <div className="bullet-row" key={j}>
-                                <textarea className="inp textarea bullet-ta" value={bullet} onChange={e => patchBullet(i, j, e.target.value)} />
-                                <button className="btn btn-icon" onClick={() => removeBullet(i, j)}>✕</button>
-                              </div>
-                            ))}
-                            <button className="btn btn-ghost btn-sm add-line" onClick={() => addBullet(i)}>+ bullet</button>
-                          </div>
-                        </div>
-                      ))}
-                      {editableCv.sections?.["Formation"] && (
-                        <label className="field">
-                          <span className="flabel">Formation <em className="hint-em">institution | diplôme | date</em></span>
-                          <textarea className="inp textarea ta-sm"
-                            value={(editableCv.sections?.["Formation"] || []).map(it => [it.institution, it.area, it.date].filter(Boolean).join(" | ")).join("\n")}
-                            onChange={e => {
-                              const entries = e.target.value.split("\n").map(l => {
-                                const [institution, area, date] = l.split("|").map(p => p.trim());
-                                return { institution, area, date };
-                              }).filter(it => it.institution || it.area || it.date);
-                              patchSection("Formation", entries);
-                            }} />
-                        </label>
-                      )}
+                      <p className="md-edit-hint">Le contenu s'édite directement dans le markdown ci-dessus — le PDF est régénéré automatiquement après chaque modification.</p>
                     </div>
                     <iframe
                       key={pdfKey}
                       className="pdf-frame"
                       title="Aperçu PDF"
-                      src={activeHistoryId ? `/api/history/${activeHistoryId}/pdf?v=${pdfKey}` : `/api/preview/pdf?v=${pdfKey}`}
+                      src={lang === "en" && resultEn
+                        ? `/api/preview/pdf-en?v=${pdfKey}`
+                        : activeHistoryId
+                          ? `/api/history/${activeHistoryId}/pdf?v=${pdfKey}`
+                          : `/api/preview/pdf?v=${pdfKey}`
+                      }
                     />
                   </div>
                 </div>

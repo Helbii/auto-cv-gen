@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import re
@@ -10,11 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 logger = logging.getLogger(__name__)
 
 from .core.config import settings
-from .schemas import JobRequest, UploadCVRequest, UpdatePdfRequest
+from .schemas import JobRequest, RenderMarkdownRequest, ScrapeRequest, TranslateRequest, UploadCVRequest, UpdatePdfRequest
 from .services.evidence import build_evidence_bank, evidence_by_id
 from .services.storage import index_evidence, load_all_evidence, has_index
 from .services.retrieval import retrieve_relevant_evidence
 from .services.ollama_client import call_ollama_json, iter_ollama_stream, parse_streaming_result, OllamaError
+from .services.grammar import correct_cv_french
 from .services.generator import (
     compute_matching_score,
     compute_matching_score_details,
@@ -35,7 +37,8 @@ from .services.generator import (
     generate_email_markdown,
     save_outputs,
 )
-from .services.rendercv_export import build_rendercv_yaml_data, export_rendercv_files, render_rendercv_data
+from .services.markdown import generate_en_markdown
+from .services.rendercv_export import build_design, build_rendercv_yaml_data, export_rendercv_files, render_rendercv_data
 from .services.docx_export import generate_cv_docx
 from .services.history import (
     init_history_db, make_history_folder, save_generation,
@@ -44,12 +47,28 @@ from .services.history import (
 from .prompts import (
     MATCHING_SCHEMA,
     GENERATED_CV_SCHEMA,
+    SCRAPE_SCHEMA,
     build_matching_prompt,
     build_generation_prompt,
+    build_scrape_prompt,
 )
 
 
 app = FastAPI(title="Auto CV Gen", version="0.1.0")
+
+_SKILL_STATUS_PREFIX = re.compile(
+    r"^(CONFIRMED|TRANSFERABLE|WEAK|ABSENT|USE|USE_CAREFULLY|DO_NOT_CLAIM)\s+",
+    re.IGNORECASE,
+)
+def _sanitize_generated_cv(cv_dict: dict) -> dict:
+    """Strip status labels the LLM leaks into skill strings (e.g. 'TRANSFERABLE cybersécurité')."""
+    targeted = cv_dict.get("targeted_cv", {})
+    for item in targeted.get("skills_to_display", []):
+        if isinstance(item, dict) and "skill" in item:
+            item["skill"] = _SKILL_STATUS_PREFIX.sub("", item["skill"]).strip()
+    return cv_dict
+
+
 init_history_db(settings.history_db_path)
 
 app.add_middleware(
@@ -87,6 +106,116 @@ def health():
         "sqlite_path": str(settings.sqlite_path),
         "has_index": has_index(settings.sqlite_path),
     }
+
+
+@app.post("/api/scrape-offer")
+async def scrape_offer_endpoint(payload: ScrapeRequest):
+    from .services.scraper import scrape_offer as _scrape
+    try:
+        raw_text = await _scrape(payload.url)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Impossible de récupérer la page : {exc}")
+
+    try:
+        extracted = call_ollama_json(
+            base_url=settings.ollama_base_url,
+            model=settings.matching_model,
+            prompt=build_scrape_prompt(raw_text),
+            format_schema=SCRAPE_SCHEMA,
+            required_keys=["title", "full_description"],
+            temperature=0.0,
+            timeout=120,
+        )
+    except OllamaError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+
+    return {
+        "title":            extracted.get("title", ""),
+        "company":          extracted.get("company", ""),
+        "location":         extracted.get("location", ""),
+        "contract_type":    extracted.get("contract_type", ""),
+        "full_description": extracted.get("full_description") or raw_text[:4_000],
+    }
+
+
+_SECTION_EN = {
+    "Expérience":       "Experience",
+    "Compétences clés": "Key Skills",
+    "Résumé":           "Summary",
+    "Formation":        "Education",
+    "Projets":          "Projects",
+    "Langues":          "Languages",
+    "Certifications":   "Certifications",
+}
+
+
+def _sections_to_english(rendercv_data: dict) -> dict:
+    """Renomme les sections du YAML RenderCV en anglais pour le PDF EN."""
+    cv = rendercv_data.get("cv", {})
+    sections = cv.get("sections", {})
+    renamed = {_SECTION_EN.get(k, k): v for k, v in sections.items()}
+    cv["sections"] = renamed
+    return rendercv_data
+
+
+@app.post("/api/translate-cv")
+def translate_cv_endpoint(payload: TranslateRequest):
+    from .services.translator import translate_markdown_to_en
+    from .services.markdown_parser import parse_markdown_to_rendercv
+    from .services.rendercv_export import build_design
+
+    if not payload.final_markdown.strip():
+        raise HTTPException(status_code=422, detail="final_markdown requis pour la traduction EN.")
+
+    generation_model = settings.generation_model
+
+    # ── Traduction fidèle markdown FR → EN ───────────────────────────────────
+    try:
+        md_en = translate_markdown_to_en(
+            payload.final_markdown,
+            model=generation_model,
+            base_url=settings.ollama_base_url,
+            lt_url=settings.languagetool_url,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Erreur traduction : {exc}")
+
+    # ── Parser le markdown EN → structure rendercv ───────────────────────────
+    cv_en = parse_markdown_to_rendercv(md_en, payload.base_cv)
+
+    # ── Rendu PDF EN ──────────────────────────────────────────────────────────
+    data = {
+        "cv": cv_en,
+        "design": build_design(payload.pdf_design),
+        "locale": {"language": "english", "last_updated": "Last updated", "present": "present"},
+    }
+    rendercv_files = render_rendercv_data(settings.output_dir, data, base_name="cv_targeted_en")
+
+    return {
+        "final_markdown": md_en,
+        "editable_cv":    cv_en,
+        "output_files":   rendercv_files,
+    }
+
+
+@app.get("/api/download/pdf-en")
+def download_pdf_en(filename: str | None = Query(default=None, max_length=120)):
+    pdf_path = settings.output_dir / "cv_targeted_en.pdf"
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="PDF anglais absent. Génère d'abord une version EN.")
+    return FileResponse(
+        path=str(pdf_path),
+        media_type="application/pdf",
+        filename=sanitize_pdf_filename(filename or "cv_targeted_en"),
+    )
+
+
+@app.get("/api/preview/pdf-en")
+def preview_pdf_en():
+    pdf_path = settings.output_dir / "cv_targeted_en.pdf"
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="PDF anglais absent.")
+    return FileResponse(path=str(pdf_path), media_type="application/pdf")
 
 
 @app.post("/api/upload-cv")
@@ -203,6 +332,8 @@ def generate_cv(payload: JobRequest):
 
         if not isinstance(generated.get("targeted_cv"), dict):
             raise OllamaError("Ollama a renvoyé targeted_cv invalide (attendu: dict, reçu: {}).".format(type(generated.get("targeted_cv")).__name__))
+        generated = correct_cv_french(generated, settings.languagetool_url)
+        generated = _sanitize_generated_cv(generated)
         generated["targeted_cv"]["matching_score"] = matching["matching_score"]
         allowed_ids = {ev["id"] for ev in allowed_evidence}
         audit = validate_generated_cv(generated, allowed_ids, forbidden_claims)
@@ -300,32 +431,37 @@ def generate_cv_stream(payload: JobRequest):
                 requirement_groups=req_groups,
                 use_no_think="qwen" in matching_model.lower(),
             )
-            matching_raw = ""
-            matching_tokens = 0
-            for _token, _done in iter_ollama_stream(
-                base_url=settings.ollama_base_url,
-                model=matching_model,
-                prompt=matching_prompt,
-                format_schema=MATCHING_SCHEMA,
-                temperature=0.05,
-                timeout=1200,
-            ):
-                matching_raw += _token
-                matching_tokens += 1
-                if matching_tokens % 30 == 0:
-                    yield _sse({"step": "llm_token", "phase": "matching", "count": matching_tokens})
-            yield _sse({"step": "llm_token", "phase": "matching", "count": matching_tokens})
-            try:
-                matching = parse_streaming_result(matching_raw, required_keys=[
-                    "recommended_title", "matching_score", "job_keywords",
-                    "requirements_analysis", "confirmed_skill_evidence_ids",
-                    "transferable_skill_evidence_ids", "forbidden_claims",
-                ])
-            except OllamaError as exc:
-                raise OllamaError(
-                    "Matching LLM invalide : CV non genere pour eviter une analyse fallback moins fine. "
-                    f"Detail : {exc}"
-                ) from exc
+            def _stream_matching(attempt: int = 0):
+                raw = ""
+                count = 0
+                for _token, _done in iter_ollama_stream(
+                    base_url=settings.ollama_base_url,
+                    model=matching_model,
+                    prompt=matching_prompt,
+                    format_schema=MATCHING_SCHEMA,
+                    temperature=0.05,
+                    timeout=1200,
+                ):
+                    raw += _token
+                    count += 1
+                    if count % 30 == 0:
+                        yield _sse({"step": "llm_token", "phase": "matching", "count": count})
+                yield _sse({"step": "llm_token", "phase": "matching", "count": count})
+                try:
+                    return parse_streaming_result(raw, required_keys=[
+                        "recommended_title", "matching_score", "job_keywords",
+                        "requirements_analysis", "confirmed_skill_evidence_ids",
+                        "transferable_skill_evidence_ids", "forbidden_claims",
+                    ])
+                except OllamaError as exc:
+                    if attempt == 0:
+                        yield _sse({"step": "matching_retry", "message": "JSON matching invalide, nouvelle tentative...", "issues": [str(exc)]})
+                        return (yield from _stream_matching(attempt=1))
+                    raise OllamaError(
+                        f"Matching LLM invalide après retry. Détail : {exc}"
+                    ) from exc
+
+            matching = yield from _stream_matching()
 
             if not matching.get("requirements_analysis"):
                 matching = build_fallback_matching(payload.job_offer, evidence_bank)
@@ -354,7 +490,7 @@ def generate_cv_stream(payload: JobRequest):
 
             forbidden_claims = matching.get("forbidden_claims", [])
 
-            def _stream_generation(retry_issues=None):
+            def _stream_generation(retry_issues=None, _attempt: int = 0):
                 """Génère via streaming, yield les events token, retourne le dict parsé."""
                 prompt = build_generation_prompt(
                     payload.job_offer, matching, allowed_evidence, forbidden_claims,
@@ -376,7 +512,13 @@ def generate_cv_stream(payload: JobRequest):
                     if count % 30 == 0:
                         yield _sse({"step": "llm_token", "phase": "generating", "count": count})
                 yield _sse({"step": "llm_token", "phase": "generating", "count": count})
-                parsed = parse_streaming_result(raw, required_keys=["targeted_cv"])
+                try:
+                    parsed = parse_streaming_result(raw, required_keys=["targeted_cv"])
+                except OllamaError as exc:
+                    if _attempt == 0:
+                        yield _sse({"step": "generating_retry", "message": "JSON invalide, nouvelle tentative...", "issues": [str(exc)]})
+                        return (yield from _stream_generation(retry_issues=retry_issues, _attempt=1))
+                    raise
                 if not isinstance(parsed.get("targeted_cv"), dict):
                     raise OllamaError(
                         "Ollama a renvoyé targeted_cv invalide (attendu: dict, reçu: {}).".format(
@@ -402,6 +544,8 @@ def generate_cv_stream(payload: JobRequest):
                 if _richness(retried) >= _richness(generated):
                     generated = retried
 
+            generated = correct_cv_french(generated, settings.languagetool_url)
+            generated = _sanitize_generated_cv(generated)
             generated["targeted_cv"]["matching_score"] = matching["matching_score"]
             yield _sse({"step": "generating_done", "message": "Génération terminée"})
 
@@ -530,6 +674,27 @@ def update_pdf(payload: UpdatePdfRequest):
     except Exception as exc:
         logger.exception("Erreur lors de la mise à jour du PDF")
         raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour du PDF. Vérifiez les logs.")
+
+
+@app.post("/api/render-markdown")
+def render_markdown_endpoint(payload: RenderMarkdownRequest):
+    from .services.markdown_parser import parse_markdown_to_rendercv
+    from .services.rendercv_export import build_design
+    try:
+        cv = parse_markdown_to_rendercv(payload.markdown, payload.base_cv)
+        locale = (
+            {"language": "english", "last_updated": "Last updated", "present": "present"}
+            if payload.lang == "en"
+            else {"language": "french", "last_updated": "Dernière mise à jour", "present": "présent"}
+        )
+        data = {"cv": cv, "design": build_design(payload.pdf_design), "locale": locale}
+        headline = str(cv.get("headline") or "cv_targeted")
+        base_name = "cv_targeted_en" if payload.lang == "en" else sanitize_pdf_filename(headline).removesuffix(".pdf")
+        output_files = render_rendercv_data(settings.output_dir, data, base_name=base_name)
+        return {"editable_cv": cv, "output_files": output_files}
+    except Exception as exc:
+        logger.exception("Erreur render-markdown")
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get("/api/history")

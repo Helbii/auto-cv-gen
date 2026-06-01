@@ -315,7 +315,10 @@ def build_generation_prompt(
     all_evidence: Optional[List[Dict[str, Any]]] = None,
     retry_issues: Optional[List[str]] = None,
     use_no_think: bool = True,
+    target_lang: str = "fr",
 ) -> str:
+    en = target_lang == "en"
+
     candidate_ctx = build_candidate_context(all_evidence or allowed_evidence)
     candidate_block = f"""
 PROFIL CANDIDAT :
@@ -327,7 +330,18 @@ PROFIL CANDIDAT :
     sector = matching.get("offer_sector", "")
     transferable_block = ""
     if sector:
-        transferable_block = f"""
+        if en:
+            transferable_block = f"""
+CONTEXTUALIZING TRANSFERABLE BULLETS:
+The target role operates in the sector/context: "{sector}".
+For each bullet from a TRANSFERABLE skill, make the explicit bridge to this context.
+- INSTEAD OF: "Developed a FastAPI API exposing scientific processing"
+- WRITE: "Developed a FastAPI API exposing scientific processing — approach transferable to {sector}"
+Be honest: never claim to have worked IN this sector, only indicate the experience is transferable.
+Add this bridge ONLY on transferable bullets, not on directly relevant ones.
+"""
+        else:
+            transferable_block = f"""
 CONTEXTUALISATION DES BULLETS TRANSFERABLES :
 Le poste cible évolue dans le secteur/contexte : « {sector} ».
 Pour chaque bullet issu d'une compétence TRANSFERABLE, fais le pont explicite avec ce contexte.
@@ -341,10 +355,102 @@ N'ajoute ce pont QUE sur les bullets transferables, pas sur les bullets déjà d
     if retry_issues:
         issues_list = "\n".join(f"- {issue}" for issue in retry_issues)
         retry_block = f"""
+⚠️ PREVIOUS ATTEMPT INSUFFICIENT — FIX IMPERATIVELY:
+{issues_list}
+This time, produce OBLIGATORILY the minimum number of required elements.
+Use ALL relevant evidence from ALLOWED_EVIDENCE to reach the required volume.
+""" if en else f"""
 ⚠️ TENTATIVE PRECEDENTE INSUFFISANTE — CORRIGE IMPERATIVEMENT :
 {issues_list}
 Cette fois, produis OBLIGATOIREMENT le nombre minimum d'elements demande.
 Exploite TOUTES les preuves pertinentes de ALLOWED_EVIDENCE pour atteindre le volume requis.
+"""
+
+    if en:
+        return f"""
+{"/no_think" if use_no_think else ""}
+
+LANGUAGE INSTRUCTION: Generate ALL text fields in professional English. No French words anywhere.
+
+You are an expert ATS-optimized CV writer.
+{candidate_block}{retry_block}
+MISSION: Write the variable sections of the targeted CV from the authorized evidence.
+
+MATCHING SUMMARY:
+{matching_summary}
+
+MANDATORY BULLET FORMAT:
+Structure: [Past tense action verb] + [precise context/technology] + [result or impact if available]
+- GOOD: "Developed 4 Python batch pipelines for structuring multi-sensor industrial datasets"
+- GOOD: "Designed and deployed a FastAPI API exposing scientific processing via REST — used in production"
+- GOOD: "Analyzed and resolved connectivity incidents on embedded IoT systems"
+- BAD: "Worked on Python pipelines"
+- BAD: "Participated in API development"
+Rules:
+- Start with a past tense verb (Developed, Designed, Analyzed, Deployed, Integrated, Optimized...)
+- 60 to 120 characters per bullet
+- Mention the specific technology or context from the evidence
+- Order bullets from most to least relevant for the offer
+{transferable_block}
+MANDATORY PROFESSIONAL SUMMARY FORMAT:
+Minimum 5 sentences, each with a distinct role. Use ONLY evidence from ALLOWED_EVIDENCE.
+
+Sentence 1 — Anchoring: [Professional title] with [N] years of experience in [proven main domain].
+Sentence 2 — Targeted evidence: proficiency in [CONFIRMED skills only], applied to [concrete context from evidence].
+  FORBIDDEN to cite a TRANSFERABLE or ABSENT skill as if acquired.
+Sentence 3 — Concrete achievement: one measurable or impactful achievement from the evidence (figure, scale, result).
+  If no figure available: describe the precise technical context (size, environment, criticality).
+Sentence 4 — Value for THIS role: explicit link between the candidate's real experience and the specific needs of the offer.
+  FORBIDDEN: naming an absent technology, writing "ability to adapt" or "skill development".
+  CORRECT: linking a proven skill to the offer's context (sector, system type, working method).
+Sentence 5 — Positioning: type of environment, project or working method where the candidate excels, consistent with the target offer.
+  FORBIDDEN: "skill development", "ability to evolve", "adaptation potential" or any generic phrase.
+
+Maximum 600 characters. No generic phrases ("passionate about", "rigorous", "dynamic").
+
+MANDATORY COVER LETTER FORMAT (application_email):
+A structured letter in 3 paragraphs, separate fields:
+- "accroche" (1 paragraph, 2-3 sentences): hook related to the POSITION and company. Show you understood the offer. No "I am writing to apply".
+- "preuves" (1 paragraph, 3-4 sentences): your most relevant concrete evidence for THIS offer (CONFIRMED skills, quantified achievements if available). Make the explicit link between your experience and the role's needs.
+- "motivation" (1 paragraph, 2-3 sentences): your motivation for this specific role + learning ability on technologies to acquire + availability for interview.
+- "subject": clear email subject, e.g. "Application - [job title]".
+Letter rules:
+- Professional tone, direct, no excessive flattery.
+- Do NOT claim anything from FORBIDDEN_CLAIMS as acquired; phrase as learning objective.
+- Do not invent the company name if absent from the offer.
+
+SIZE CONSTRAINTS:
+- 6 to 9 skills to display
+- 5 to 8 experience bullets
+- Summary: 5 sentences, maximum 600 characters
+- Each letter paragraph: 2 to 4 sentences maximum
+
+ABSOLUTE RULES:
+- Fill all requested JSON keys.
+- Use no information absent from ALLOWED_EVIDENCE.
+- Invent no experience, project, or technology.
+- Claim nothing present in FORBIDDEN_CLAIMS.
+- Frame TRANSFERABLE elements as such (close experience, transfer ability).
+- Frame absent technologies as training objectives, never as acquired experience.
+- Each skill and each bullet must cite at least one valid evidence_id.
+- Integrate the offer's keywords into skills and summary (ATS optimization).
+
+LANGUAGE RULE — mandatory, no exception:
+- Each bullet starts with a PAST TENSE verb (Developed, Designed, Analyzed, Resolved, Deployed...). Never infinitive or present tense.
+- Two coordinated verbs: BOTH past tense — "Analyzed and resolved", never "Analyze and resolved".
+
+JOB OFFER:
+\"\"\"
+{job_offer}
+\"\"\"
+
+ALLOWED_EVIDENCE:
+{json.dumps(allowed_evidence, ensure_ascii=False, indent=2)}
+
+FORBIDDEN_CLAIMS:
+{json.dumps(forbidden_claims, ensure_ascii=False, indent=2)}
+
+Respond with valid JSON only.
 """
 
     return f"""
@@ -361,7 +467,7 @@ FORMAT OBLIGATOIRE DES BULLETS :
 Structure : [Verbe d'action passe] + [contexte/technologie precise] + [resultat ou impact si disponible]
 - BON  : "Developpe 4 pipelines Python batch pour la structuration de datasets industriels multi-capteurs"
 - BON  : "Concu et deploye une API FastAPI exposant des traitements scientifiques via REST — utilisee en production"
-- BON  : "Analyse et resolu des incidents de connectivite sur systemes embarques IoT"
+- BON  : "Analyse et résolu des incidents de connectivite sur systemes embarques IoT"
 - MAUVAIS : "Travaille sur des pipelines Python"
 - MAUVAIS : "Participe au developpement d'APIs"
 Regles :
@@ -413,6 +519,11 @@ REGLES ABSOLUES :
 - Chaque competence et chaque bullet doit citer au moins un evidence_id valide.
 - Integre les mots-cles de l'offre dans competences et resume (optimisation ATS).
 
+RÈGLE LINGUISTIQUE — obligatoire, sans exception :
+- Chaque bullet commence par un PARTICIPE PASSÉ (Développé, Conçu, Analysé, Résolu, Déployé…). Jamais infinitif ni présent.
+- Deux verbes coordonnés : les DEUX au participe passé — "Analysé et résolu", jamais "Analyse et résolu".
+- Corrige silencieusement les accords et articles manquants des preuves sources.
+
 OFFRE D'EMPLOI :
 \"\"\"
 {job_offer}
@@ -426,3 +537,39 @@ FORBIDDEN_CLAIMS :
 
 Reponds uniquement en JSON valide.
 """
+
+
+# ── Scraping ──────────────────────────────────────────────────────────────────
+
+SCRAPE_SCHEMA: Dict[str, Any] = {
+    "type": "object",
+    "required": ["title", "full_description"],
+    "properties": {
+        "title":            {"type": "string"},
+        "company":          {"type": "string"},
+        "location":         {"type": "string"},
+        "contract_type":    {"type": "string"},
+        "full_description": {"type": "string"},
+    },
+}
+
+
+def build_scrape_prompt(raw_text: str) -> str:
+    truncated = raw_text[:6_000]
+    return f"""\
+Tu es un parseur d'offres d'emploi. Voici le texte brut extrait d'une page web.
+
+Extrais :
+- title : titre exact du poste
+- company : nom de l'entreprise (vide si absent)
+- location : lieu de travail (vide si absent)
+- contract_type : type de contrat CDI/CDD/Stage/Freelance/etc. (vide si absent)
+- full_description : texte complet de l'offre (missions, compétences requises, profil recherché, avantages).
+  Conserve tout le contenu utile. Supprime uniquement : navigation du site, publicités, suggestions d'offres similaires, footer, cookies.
+
+TEXTE BRUT :
+{truncated}
+
+Réponds uniquement en JSON valide.
+"""
+

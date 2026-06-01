@@ -30,3 +30,20 @@ class UploadCVRequest(BaseModel):
     cv_master: Dict[str, Any]
 
 
+class ScrapeRequest(BaseModel):
+    url: str = Field(..., min_length=10, max_length=2000)
+
+
+class TranslateRequest(BaseModel):
+    final_markdown: str
+    base_cv: Dict[str, Any]
+    pdf_design: Optional[Dict[str, Any]] = None
+
+
+class RenderMarkdownRequest(BaseModel):
+    markdown: str
+    base_cv: Dict[str, Any]
+    pdf_design: Optional[Dict[str, Any]] = None
+    lang: str = "fr"
+
+
